@@ -46,17 +46,17 @@ class Auth extends ShieldAuth
      * --------------------------------------------------------------------
      */
     public array $views = [
-        'login'                       => '\CodeIgniter\Shield\Views\login',
-        'register'                    => '\CodeIgniter\Shield\Views\register',
-        'layout'                      => '\CodeIgniter\Shield\Views\layout',
-        'action_email_2fa'            => '\CodeIgniter\Shield\Views\email_2fa_show',
-        'action_email_2fa_verify'     => '\CodeIgniter\Shield\Views\email_2fa_verify',
-        'action_email_2fa_email'      => '\CodeIgniter\Shield\Views\Email\email_2fa_email',
-        'action_email_activate_show'  => '\CodeIgniter\Shield\Views\email_activate_show',
-        'action_email_activate_email' => '\CodeIgniter\Shield\Views\Email\email_activate_email',
-        'magic-link-login'            => '\CodeIgniter\Shield\Views\magic_link_form',
-        'magic-link-message'          => '\CodeIgniter\Shield\Views\magic_link_message',
-        'magic-link-email'            => '\CodeIgniter\Shield\Views\Email\magic_link_email',
+        'login'                       => 'auth/login',
+        'register'                    => 'auth/register',
+        'layout'                      => 'layouts/auth',
+        'action_email_2fa'            => '\\CodeIgniter\\Shield\\Views\\email_2fa_show',
+        'action_email_2fa_verify'     => '\\CodeIgniter\\Shield\\Views\\email_2fa_verify',
+        'action_email_2fa_email'      => '\\CodeIgniter\\Shield\\Views\\Email\\email_2fa_email',
+        'action_email_activate_show'  => 'auth/otp_verify',
+        'action_email_activate_email' => '\\CodeIgniter\\Shield\\Views\\Email\\email_activate_email',
+        'magic-link-login'            => 'auth/reset_password',
+        'magic-link-message'          => '\\CodeIgniter\\Shield\\Views\\magic_link_message',
+        'magic-link-email'            => '\\CodeIgniter\\Shield\\Views\\Email\\magic_link_email',
     ];
 
     /**
@@ -225,7 +225,7 @@ class Auth extends ShieldAuth
     public array $usernameValidationRules = [
         'label' => 'Auth.username',
         'rules' => [
-            'required',
+            'permit_empty',
             'max_length[30]',
             'min_length[3]',
             'regex_match[/\A[a-zA-Z0-9\.]+\z/]',

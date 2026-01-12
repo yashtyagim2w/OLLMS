@@ -1,0 +1,112 @@
+<?php
+
+/**
+ * Sidebar Component
+ * Navigation for User/Admin based on role
+ * Uses arrays and loops for menu items
+ */
+$currentUser = auth()->user();
+$isAdmin = $currentUser ? $currentUser->inGroup('admin') : false;
+$currentPath = uri_string();
+$verificationStatus = $verificationStatus ?? 'PENDING';
+
+// Admin Menu Structure
+$adminMenu = [
+    [
+        'title' => 'Main',
+        'items' => [
+            ['path' => '/admin/dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
+        ]
+    ],
+    [
+        'title' => 'Verification',
+        'items' => [
+            ['path' => '/admin/identity-review', 'icon' => 'bi-person-check', 'label' => 'Identity Review', 'badge' => 5],
+            ['path' => '/admin/users', 'icon' => 'bi-people', 'label' => 'User Management'],
+        ]
+    ],
+    [
+        'title' => 'Content',
+        'items' => [
+            ['path' => '/admin/videos', 'icon' => 'bi-play-circle', 'label' => 'Video Management'],
+            ['path' => '/admin/questions', 'icon' => 'bi-question-circle', 'label' => 'Question Bank'],
+            ['path' => '/admin/instructions', 'icon' => 'bi-list-check', 'label' => 'Test Instructions'],
+        ]
+    ],
+    [
+        'title' => 'Reports',
+        'items' => [
+            ['path' => '/admin/progress', 'icon' => 'bi-graph-up', 'label' => 'Progress Monitoring'],
+            ['path' => '/admin/reports', 'icon' => 'bi-file-earmark-bar-graph', 'label' => 'Reports & Analytics'],
+        ]
+    ]
+];
+
+// User Menu Structure (conditional based on verification)
+$userMenu = [
+    [
+        'title' => 'Main',
+        'items' => [
+            ['path' => '/dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
+        ]
+    ]
+];
+
+// Add more menu items only if documents are approved
+if ($verificationStatus === 'APPROVED') {
+    $userMenu[] = [
+        'title' => 'Learning',
+        'items' => [
+            ['path' => '/videos', 'icon' => 'bi-play-circle', 'label' => 'Training Videos'],
+            ['path' => '/video-progress', 'icon' => 'bi-bar-chart', 'label' => 'My Progress'],
+        ]
+    ];
+    $userMenu[] = [
+        'title' => 'Test',
+        'items' => [
+            ['path' => '/test-instructions', 'icon' => 'bi-info-circle', 'label' => 'Test Instructions'],
+            ['path' => '/test', 'icon' => 'bi-pencil-square', 'label' => 'Take Test'],
+        ]
+    ];
+    $userMenu[] = [
+        'title' => 'Certificate',
+        'items' => [
+            ['path' => '/certificate', 'icon' => 'bi-award', 'label' => 'My Certificate'],
+        ]
+    ];
+}
+
+// Select menu based on role
+$menu = $isAdmin ? $adminMenu : $userMenu;
+?>
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <i class="bi bi-car-front-fill"></i>
+        </div>
+        <div class="sidebar-brand">
+            <h1>OLLMS</h1>
+            <span>Learner's License Portal</span>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <?php foreach ($menu as $section): ?>
+            <div class="nav-section">
+                <div class="nav-section-title"><?= $section['title'] ?></div>
+                <?php foreach ($section['items'] as $item): ?>
+                    <?php
+                    $isActive = '/' . $currentPath === $item['path'] || $currentPath === ltrim($item['path'], '/');
+                    ?>
+                    <a href="<?= $item['path'] ?>" class="nav-item <?= $isActive ? 'active' : '' ?>">
+                        <i class="bi <?= $item['icon'] ?>"></i>
+                        <?= $item['label'] ?>
+                        <?php if (isset($item['badge'])): ?>
+                            <span class="nav-badge"><?= $item['badge'] ?></span>
+                        <?php endif; ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        <?php endforeach; ?>
+    </nav>
+</aside>
