@@ -1,0 +1,204 @@
+/* ============================================
+   OLLMS - Authentication Pages Stylesheet
+   ============================================ */
+
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    padding: 40px 20px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+}
+
+.auth-header {
+    background: var(--primary-color);
+    padding: 32px 40px;
+    text-align: center;
+}
+
+.auth-logo {
+    width: 72px;
+    height: 72px;
+    background: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.auth-logo i {
+    font-size: 36px;
+    color: var(--primary-color);
+}
+
+.auth-title {
+    color: var(--white);
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.auth-subtitle {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+}
+
+.auth-body {
+    padding: 40px;
+}
+
+.auth-body .form-control {
+    padding: 14px 16px;
+}
+
+.auth-links {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    font-size: 13px;
+}
+
+.auth-actions .btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+}
+
+.auth-footer {
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid var(--gray-200);
+    font-size: 14px;
+}
+
+/* OTP Input */
+.otp-inputs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.otp-input {
+    width: 52px;
+    height: 60px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-md);
+}
+
+.otp-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.otp-input.filled {
+    border-color: var(--primary-color);
+    background: rgba(26, 58, 92, 0.05);
+}
+
+.resend-otp {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.resend-otp p {
+    font-size: 13px;
+    color: var(--gray-600);
+}
+
+.resend-otp .timer {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.resend-otp .btn-link {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.resend-otp .btn-link:disabled {
+    color: var(--gray-400);
+    cursor: not-allowed;
+}
+
+/* Password Toggle */
+.password-toggle {
+    position: relative;
+}
+
+.password-toggle .form-control {
+    padding-right: 48px;
+}
+
+.password-toggle .toggle-btn {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--gray-500);
+    cursor: pointer;
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-check-input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+}
+
+.gov-notice {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+}
+
+.gov-notice i {
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+.gov-notice p {
+    font-size: 12px;
+    color: var(--gray-600);
+    margin: 0;
+}
+
+@media (max-width: 480px) {
+    .auth-body {
+        padding: 32px 24px;
+    }
+
+    .otp-input {
+        width: 44px;
+        height: 52px;
+        font-size: 20px;
+    }
+}
