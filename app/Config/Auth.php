@@ -52,7 +52,7 @@ class Auth extends ShieldAuth
         'action_email_2fa'            => '\\CodeIgniter\\Shield\\Views\\email_2fa_show',
         'action_email_2fa_verify'     => '\\CodeIgniter\\Shield\\Views\\email_2fa_verify',
         'action_email_2fa_email'      => '\\CodeIgniter\\Shield\\Views\\Email\\email_2fa_email',
-        'action_email_activate_show'  => 'auth/otp_verify',
+        'action_email_activate_show'  => '\\CodeIgniter\\Shield\\Views\\email_activate_show',
         'action_email_activate_email' => '\\CodeIgniter\\Shield\\Views\\Email\\email_activate_email',
         'magic-link-login'            => 'auth/reset_password',
         'magic-link-message'          => '\\CodeIgniter\\Shield\\Views\\magic_link_message',
@@ -74,7 +74,7 @@ class Auth extends ShieldAuth
      * to apply any logic you may need.
      */
     public array $redirects = [
-        'register'          => '/',
+        'register'          => '/verify-otp',
         'login'             => '/',
         'logout'            => 'login',
         'force_reset'       => '/',
@@ -103,7 +103,7 @@ class Auth extends ShieldAuth
      * @var array<string, class-string<ActionInterface>|null>
      */
     public array $actions = [
-        'register' => null,
+        'register' => null,  // Using custom OTP flow via user_profiles.verification_status
         'login'    => null,
     ];
 

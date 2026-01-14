@@ -14,8 +14,8 @@
                         </div>
                         <h2 class="mb-3">Email Verified!</h2>
                         <p class="text-muted mb-4">Your email has been successfully verified. You can now proceed with your application.</p>
-                        <a href="/dashboard" class="btn btn-primary btn-lg">
-                            <i class="bi bi-house me-2"></i>Go to Dashboard
+                        <a href="/identity-upload" class="btn btn-primary btn-lg">
+                            <i class="bi bi-upload me-2"></i>Upload Identity Document
                         </a>
                     <?php else: ?>
                         <!-- OTP Verification Form -->
@@ -28,41 +28,27 @@
                             <strong><?= esc($email ?? 'your@email.com') ?></strong>
                         </p>
 
-                        <!-- Hidden element for SWAL -->
-                        <?php if (session('error')): ?>
-                            <div id="session-error" style="display:none;"><?= esc(session('error')) ?></div>
-                        <?php endif; ?>
-
-                        <?php if (session('message')): ?>
-                            <div id="session-success" style="display:none;"><?= esc(session('message')) ?></div>
-                        <?php endif; ?>
-
-                        <form action="/verify-otp" method="post" id="otpForm">
-                            <?= csrf_field() ?>
-
+                        <div id="otpForm">
                             <div class="otp-container d-flex justify-content-center gap-2 mb-4">
-                                <input type="text" class="form-control otp-input text-center" maxlength="1" name="otp[]" required autofocus>
-                                <input type="text" class="form-control otp-input text-center" maxlength="1" name="otp[]" required>
-                                <input type="text" class="form-control otp-input text-center" maxlength="1" name="otp[]" required>
-                                <input type="text" class="form-control otp-input text-center" maxlength="1" name="otp[]" required>
-                                <input type="text" class="form-control otp-input text-center" maxlength="1" name="otp[]" required>
-                                <input type="text" class="form-control otp-input text-center" maxlength="1" name="otp[]" required>
+                                <input type="text" class="form-control otp-input text-center" maxlength="1" data-index="0" autofocus>
+                                <input type="text" class="form-control otp-input text-center" maxlength="1" data-index="1">
+                                <input type="text" class="form-control otp-input text-center" maxlength="1" data-index="2">
+                                <input type="text" class="form-control otp-input text-center" maxlength="1" data-index="3">
+                                <input type="text" class="form-control otp-input text-center" maxlength="1" data-index="4">
+                                <input type="text" class="form-control otp-input text-center" maxlength="1" data-index="5">
                             </div>
 
                             <div class="d-grid gap-2 mb-4">
-                                <button type="submit" class="btn btn-primary btn-lg">
+                                <button type="button" class="btn btn-primary btn-lg" id="verifyBtn">
                                     <i class="bi bi-shield-check me-2"></i>Verify Email
                                 </button>
                             </div>
-                        </form>
+                        </div>
 
                         <p class="text-muted mb-2">Didn't receive the code?</p>
-                        <form action="/resend-otp" method="post" class="d-inline">
-                            <?= csrf_field() ?>
-                            <button type="submit" class="btn btn-link" id="resendBtn">
-                                Resend Code <span id="resendTimer"></span>
-                            </button>
-                        </form>
+                        <button type="button" class="btn btn-link" id="resendBtn" disabled>
+                            <i class="bi bi-arrow-repeat me-1"></i>Resend Code <span id="resendTimer">(60s)</span>
+                        </button>
 
                         <hr class="my-4">
 
@@ -81,9 +67,49 @@
 <?= $this->section('scripts') ?>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // OTP input auto-focus and navigation
         const otpInputs = document.querySelectorAll('.otp-input');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const resendBtn = document.getElementById('resendBtn');
+        const resendTimer = document.getElementById('resendTimer');
+        const csrfToken = '<?= csrf_hash() ?>';
+        const csrfName = '<?= csrf_token() ?>';
+        const needsOtp = <?= ($needsOtp ?? true) ? 'true' : 'false' ?>;
+        const remainingCooldown = <?= $remainingCooldown ?? 0 ?>;
 
+        let countdown = 60;
+        let timerInterval = null;
+
+        // Send OTP on page load if needed
+        async function sendInitialOtp() {
+            try {
+                const formData = new FormData();
+                formData.append(csrfName, csrfToken);
+
+                const response = await axios.post('/api/send-otp', formData);
+
+                if (response.data.success) {
+                    if (response.data.data?.redirect) {
+                        window.location.href = response.data.data.redirect;
+                        return;
+                    }
+                    // Start timer after OTP is sent (fresh or already sent)
+                    const cooldown = response.data.data?.cooldown || 60;
+                    startTimer(cooldown);
+                }
+            } catch (error) {
+                console.error('Failed to send OTP:', error);
+                // Even on error, enable resend button so user can try again
+                resendBtn.disabled = false;
+                resendTimer.textContent = '';
+            }
+        }
+
+        // Send OTP when page loads
+        if (needsOtp) {
+            sendInitialOtp();
+        }
+
+        // OTP INPUT HANDLING
         otpInputs.forEach((input, index) => {
             // Only allow numbers
             input.addEventListener('input', function(e) {
@@ -97,6 +123,10 @@
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Backspace' && !this.value && index > 0) {
                     otpInputs[index - 1].focus();
+                }
+                // Handle Enter to submit
+                if (e.key === 'Enter') {
+                    submitOtp();
                 }
             });
 
@@ -113,24 +143,110 @@
             });
         });
 
-        // Resend timer (60 seconds)
-        let countdown = 60;
-        const resendBtn = document.getElementById('resendBtn');
-        const resendTimer = document.getElementById('resendTimer');
+        // VERIFY OTP
+        function getOtpValue() {
+            return Array.from(otpInputs).map(input => input.value).join('');
+        }
 
-        function updateTimer() {
-            if (countdown > 0) {
-                resendBtn.disabled = true;
-                resendTimer.textContent = `(${countdown}s)`;
-                countdown--;
-                setTimeout(updateTimer, 1000);
-            } else {
-                resendBtn.disabled = false;
-                resendTimer.textContent = '';
+        async function submitOtp() {
+            const otp = getOtpValue();
+
+            if (otp.length !== 6) {
+                SwalHelper.error('Invalid Code', 'Please enter all 6 digits.');
+                return;
+            }
+
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
+
+            try {
+                const formData = new FormData();
+                formData.append(csrfName, csrfToken);
+                formData.append('otp', otp);
+
+                const response = await axios.post('/api/verify-otp', formData);
+
+                if (response.data.success) {
+                    SwalHelper.success('Success', response.data.message).then(() => {
+                        if (response.data.data?.redirect) {
+                            window.location.href = response.data.data.redirect;
+                        }
+                    });
+                } else {
+                    SwalHelper.error('Error', response.data.message);
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Verify Email';
+                }
+            } catch (error) {
+                const message = error.response?.data?.message || 'An error occurred. Please try again.';
+                SwalHelper.error('Error', message);
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Verify Email';
             }
         }
 
-        updateTimer();
+        verifyBtn.addEventListener('click', submitOtp);
+
+        // RESEND OTP
+        function startTimer(seconds) {
+            countdown = seconds;
+            resendBtn.disabled = true;
+
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                if (countdown > 0) {
+                    resendTimer.textContent = `(${countdown}s)`;
+                    countdown--;
+                } else {
+                    clearInterval(timerInterval);
+                    resendBtn.disabled = false;
+                    resendTimer.textContent = '';
+                }
+            }, 1000);
+        }
+
+        async function resendOtp() {
+            resendBtn.disabled = true;
+            resendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+
+            try {
+                const formData = new FormData();
+                formData.append(csrfName, csrfToken);
+
+                const response = await axios.post('/api/resend-otp', formData);
+
+                if (response.data.success) {
+                    SwalHelper.success('Sent', response.data.message);
+                    startTimer(response.data.data?.cooldown || 60);
+                } else {
+                    SwalHelper.error('Error', response.data.message);
+                    if (response.data.errors?.cooldown) {
+                        startTimer(response.data.errors.cooldown);
+                    }
+                }
+            } catch (error) {
+                const errorData = error.response?.data;
+                const message = errorData?.message || 'An error occurred. Please try again.';
+                SwalHelper.error('Error', message);
+                if (errorData?.errors?.cooldown) {
+                    startTimer(errorData.errors.cooldown);
+                }
+            } finally {
+                resendBtn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Resend Code <span id="resendTimer"></span>';
+            }
+        }
+
+        resendBtn.addEventListener('click', resendOtp);
+
+        // Start timer with remaining cooldown if OTP was already sent
+        if (!needsOtp && remainingCooldown > 0) {
+            startTimer(remainingCooldown);
+        } else if (!needsOtp) {
+            // OTP was sent but cooldown expired - enable resend button
+            resendBtn.disabled = false;
+            resendTimer.textContent = '';
+        }
     });
 </script>
 

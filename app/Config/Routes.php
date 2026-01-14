@@ -9,30 +9,60 @@ use CodeIgniter\Router\RouteCollection;
 // Landing page - redirects based on auth status
 $routes->get('/', 'Home::index');
 
-// Shield auth routes
-service('auth')->routes($routes);
+// Custom registration with profile creation (overrides Shield)
+$routes->post('register', 'RegisterController::registerAction');
 
-// Custom Auth Routes (for custom views)
-$routes->group('auth', static function ($routes) {
-    $routes->get('login', 'AuthController::login');
-    $routes->get('register', 'AuthController::register');
-    $routes->get('reset-password', 'AuthController::resetPassword');
+// Override Shield's action routes - redirect to our custom OTP page
+$routes->get('auth/a/show', static function () {
+    return redirect()->to('/verify-otp');
+});
+$routes->get('auth/a/verify', static function () {
+    return redirect()->to('/verify-otp');
+});
+$routes->post('auth/a/verify', static function () {
+    return redirect()->to('/verify-otp');
+});
+$routes->post('auth/a/handle', static function () {
+    return redirect()->to('/verify-otp');
 });
 
-// User Routes (protected by session filter)
-$routes->group('', ['filter' => 'session'], static function ($routes) {
-    // Email Verification (requires login)
+// Shield auth routes (handles login, logout, magic-link, etc.)
+service('auth')->routes($routes);
+
+// PUBLIC ROUTES (No authentication required)
+
+// Password Reset (custom implementation)
+$routes->get('forgot-password', 'AuthController::forgotPassword');
+$routes->post('forgot-password', 'AuthController::sendResetLink');
+$routes->get('reset-password/(:any)', 'AuthController::showResetForm/$1');
+$routes->post('reset-password', 'AuthController::resetPassword');
+
+// USER ROUTES - Authentication Steps (session + user group, no status check)
+$routes->group('', ['filter' => ['session', 'group:user']], static function ($routes) {
+    // Email Verification
     $routes->get('verify-otp', 'UserController::verifyOtp');
 
+    // API endpoints for OTP (JSON responses)
+    $routes->post('api/send-otp', 'UserController::apiSendOtp');
+    $routes->post('api/verify-otp', 'UserController::apiVerifyOtp');
+    $routes->post('api/resend-otp', 'UserController::apiResendOtp');
+
+    // Identity Upload (accessible during auth flow)
+    $routes->get('identity-upload', 'UserController::identityUpload');
+    $routes->post('identity-upload', 'UserController::processIdentityUpload');
+
+    // Verification Status (accessible during auth flow)
+    $routes->get('verification-status', 'UserController::verificationStatus');
+});
+
+// USER ROUTES - Protected (requires session + user group + approved status)
+$routes->group('', ['filter' => ['session', 'group:user', 'userstatus']], static function ($routes) {
     // Dashboard
     $routes->get('dashboard', 'UserController::dashboard');
 
     // Profile
     $routes->get('profile', 'UserController::profile');
-
-    // Identity & Verification
-    $routes->get('identity-upload', 'UserController::identityUpload');
-    $routes->get('verification-status', 'UserController::verificationStatus');
+    $routes->post('profile', 'UserController::updateProfile');
 
     // Videos
     $routes->get('videos', 'UserController::videos');
@@ -49,8 +79,8 @@ $routes->group('', ['filter' => 'session'], static function ($routes) {
     $routes->get('certificate', 'UserController::certificate');
 });
 
-// Admin Routes (protected by session filter)
-$routes->group('admin', ['filter' => 'session'], static function ($routes) {
+// ADMIN ROUTES (session + admin group)
+$routes->group('admin', ['filter' => ['session', 'group:admin']], static function ($routes) {
     $routes->get('dashboard', 'AdminController::dashboard');
     $routes->get('profile', 'AdminController::profile');
     $routes->get('identity-review', 'AdminController::identityReview');
@@ -64,6 +94,8 @@ $routes->group('admin', ['filter' => 'session'], static function ($routes) {
     // API Routes for List Pages
     $routes->get('api/identity-reviews', 'AdminController::getIdentityReviews');
     $routes->get('api/identity-reviews/(:num)', 'AdminController::getIdentityReviewDetail/$1');
+    $routes->post('api/identity-reviews/(:num)/approve', 'AdminController::approveIdentity/$1');
+    $routes->post('api/identity-reviews/(:num)/reject', 'AdminController::rejectIdentity/$1');
     $routes->get('api/users', 'AdminController::getUsers');
     $routes->get('api/videos', 'AdminController::getVideos');
     $routes->get('api/questions', 'AdminController::getQuestions');
