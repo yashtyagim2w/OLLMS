@@ -23,10 +23,12 @@
                 </div>
             </div>
 
-            <form id="identityUploadForm" action="/identity-upload" method="post" enctype="multipart/form-data">
+            <form id="identityUploadForm" data-no-protect="true">
+                <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>" id="csrfToken">
+
                 <div class="form-group">
                     <label class="form-label">Aadhar Number <span class="required">*</span></label>
-                    <input type="text" name="aadhar_number" class="form-control"
+                    <input type="text" name="aadhar_number" id="aadharNumber" class="form-control"
                         placeholder="Enter 12-digit Aadhar number"
                         pattern="[0-9]{12}"
                         maxlength="12"
@@ -36,8 +38,8 @@
 
                 <div class="form-group">
                     <label class="form-label">Upload Aadhar Card <span class="required">*</span></label>
+                    <input type="file" name="document" id="documentFile" accept=".pdf,.jpg,.jpeg,.png" hidden required>
                     <div class="file-upload" id="fileUploadArea">
-                        <input type="file" name="document" id="documentFile" accept=".pdf,.jpg,.jpeg,.png" hidden required>
                         <i class="bi bi-cloud-arrow-up"></i>
                         <p class="mb-1">Click or drag file to upload</p>
                         <span>Supported formats: PDF, JPG, PNG (Max: 5MB)</span>
@@ -45,7 +47,7 @@
                     <div id="filePreview" class="mt-3 d-none">
                         <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
                             <div class="d-flex align-items-center gap-3">
-                                <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 32px;"></i>
+                                <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 32px;" id="fileIcon"></i>
                                 <div>
                                     <p class="mb-0 fw-bold" id="fileName">document.pdf</p>
                                     <small class="text-muted" id="fileSize">2.5 MB</small>
@@ -54,6 +56,17 @@
                             <button type="button" class="btn btn-sm btn-outline-danger" id="removeFile">
                                 <i class="bi bi-x"></i> Remove
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- Upload Progress -->
+                    <div id="uploadProgress" class="mt-3 d-none">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span id="uploadStatusText">Uploading...</span>
+                            <span id="uploadPercent">0%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
@@ -68,7 +81,7 @@
                 </div>
 
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary btn-lg">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                         <i class="bi bi-upload"></i> Submit for Verification
                     </button>
                     <a href="/dashboard" class="btn btn-outline-secondary">Cancel</a>
@@ -80,25 +93,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
-    const fileInput = document.getElementById('documentFile');
-    const fileUploadArea = document.getElementById('fileUploadArea');
-    const filePreview = document.getElementById('filePreview');
-
-    fileInput.addEventListener('change', function() {
-        if (this.files.length > 0) {
-            const file = this.files[0];
-            document.getElementById('fileName').textContent = file.name;
-            document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-            filePreview.classList.remove('d-none');
-            fileUploadArea.style.display = 'none';
-        }
-    });
-
-    document.getElementById('removeFile').addEventListener('click', function() {
-        fileInput.value = '';
-        filePreview.classList.add('d-none');
-        fileUploadArea.style.display = 'block';
-    });
-</script>
+<script src="/assets/js/identity-upload.js"></script>
 <?= $this->endSection() ?>

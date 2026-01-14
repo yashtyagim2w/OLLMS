@@ -51,6 +51,10 @@ $routes->group('', ['filter' => ['session', 'group:user']], static function ($ro
     $routes->get('identity-upload', 'UserController::identityUpload');
     $routes->post('identity-upload', 'UserController::processIdentityUpload');
 
+    // API endpoints for S3 presigned upload
+    $routes->post('api/get-upload-url', 'UserController::apiGetUploadUrl');
+    $routes->post('api/confirm-upload', 'UserController::apiConfirmUpload');
+
     // Verification Status (accessible during auth flow)
     $routes->get('verification-status', 'UserController::verificationStatus');
 });
