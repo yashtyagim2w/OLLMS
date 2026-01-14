@@ -47,9 +47,7 @@
                         <label class="form-check-label" for="remember">Remember me</label>
                     </div>
                 <?php endif; ?>
-                <?php if (setting('Auth.allowMagicLinkLogins') ?? true): ?>
-                    <a href="<?= url_to('magic-link') ?>">Forgot Password?</a>
-                <?php endif; ?>
+                <a href="/forgot-password">Forgot Password?</a>
             </div>
 
             <div class="d-grid gap-2">
