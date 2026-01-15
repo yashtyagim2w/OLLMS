@@ -447,15 +447,22 @@ class UserController extends BaseController
             return $this->backWithError('File size must be less than 5MB.');
         }
 
-        // TODO: Upload to AWS S3 (placeholder - move to writable/uploads for now)
-        $newName = $file->getRandomName();
-        $file->move(WRITEPATH . 'uploads/documents', $newName);
-        $documentUrl = 'uploads/documents/' . $newName;
+        // Upload to AWS S3
+        $s3 = service('s3');
+        $result = $s3->upload($file, 'documents/' . $user->id);
+
+        if (!$result['success']) {
+            log_message('error', 'S3 Upload failed: ' . $result['error']);
+            return $this->backWithError('Failed to upload document. Please try again.');
+        }
+
+        // Store S3 key in database (not full URL)
+        $documentUrl = $result['key'];
 
         // Create document record
-        $result = $this->documentModel->createDocument($user->id, $aadharNumber, $documentUrl);
+        $dbResult = $this->documentModel->createDocument($user->id, $aadharNumber, $documentUrl);
 
-        if (!$result) {
+        if (!$dbResult) {
             return $this->backWithError('Failed to save document. Please try again.');
         }
 
@@ -463,6 +470,136 @@ class UserController extends BaseController
             '/verification-status',
             'Document uploaded successfully. Please wait for verification.'
         );
+    }
+
+    /**
+     * API: Get presigned URL for direct S3 upload
+     */
+    public function apiGetUploadUrl()
+    {
+        $user = $this->user();
+        $profile = $this->getProfile();
+
+        // Must verify email first
+        if (!$profile || $profile['verification_status'] !== 'COMPLETED') {
+            return $this->jsonError('Please verify your email first.');
+        }
+
+        // Validate Aadhaar number
+        $aadharNumber = $this->request->getPost('aadhar_number');
+        $aadharNumber = preg_replace('/\s+/', '', $aadharNumber ?? '');
+
+        if (!preg_match('/^\d{12}$/', $aadharNumber)) {
+            return $this->jsonError('Aadhaar number must be exactly 12 digits.');
+        }
+
+        // Check if Aadhaar is already in use by another user
+        if ($this->documentModel->isAadhaarInUse($aadharNumber, $user->id)) {
+            return $this->jsonError('This Aadhaar number is already registered with another account.');
+        }
+
+        // Get file info
+        $filename = $this->request->getPost('filename');
+        $contentType = $this->request->getPost('content_type');
+        $fileSize = (int) $this->request->getPost('file_size');
+
+        // Validate file type
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+        if (!in_array($contentType, $allowedTypes)) {
+            return $this->jsonError('Invalid file type. Please upload JPEG, PNG, or PDF.');
+        }
+
+        // Validate file size (max 5MB)
+        if ($fileSize > 5 * 1024 * 1024) {
+            return $this->jsonError('File size must be less than 5MB.');
+        }
+
+        // Get file extension
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        if (empty($extension)) {
+            $extension = match ($contentType) {
+                'image/jpeg', 'image/jpg' => 'jpg',
+                'image/png' => 'png',
+                'application/pdf' => 'pdf',
+                default => 'bin'
+            };
+        }
+
+        // Generate presigned upload URL
+        $s3 = service('s3');
+        $awsConfig = config('Aws');
+        $newFilename = $s3->generateFilename($extension);
+        $result = $s3->getPresignedUploadUrl(
+            $awsConfig->documentsPrefix . '/' . $user->id,
+            $newFilename,
+            $contentType
+        );
+
+        if (!$result['success']) {
+            return $this->jsonError('Failed to generate upload URL.');
+        }
+
+        // Store pending upload info in session
+        session()->set('pending_upload', [
+            'key' => $result['key'],
+            'aadhar_number' => $aadharNumber,
+            'created_at' => time(),
+        ]);
+
+        return $this->jsonSuccess('Upload URL generated.', [
+            'uploadUrl' => $result['uploadUrl'],
+            'key' => $result['key'],
+        ]);
+    }
+
+    /**
+     * API: Confirm S3 upload and save to database
+     */
+    public function apiConfirmUpload()
+    {
+        $user = $this->user();
+        $profile = $this->getProfile();
+
+        // Must verify email first
+        if (!$profile || $profile['verification_status'] !== 'COMPLETED') {
+            return $this->jsonError('Please verify your email first.');
+        }
+
+        // Get pending upload from session
+        $pendingUpload = session('pending_upload');
+        if (!$pendingUpload) {
+            return $this->jsonError('No pending upload found. Please try again.');
+        }
+
+        // Check if upload was recent (within 10 minutes)
+        if (time() - $pendingUpload['created_at'] > 600) {
+            session()->remove('pending_upload');
+            return $this->jsonError('Upload session expired. Please try again.');
+        }
+
+        // Verify the file exists in S3
+        $s3 = service('s3');
+        if (!$s3->exists($pendingUpload['key'])) {
+            return $this->jsonError('File not found. Please upload again.');
+        }
+
+        // Create document record
+        $result = $this->documentModel->createDocument(
+            $user->id,
+            $pendingUpload['aadhar_number'],
+            $pendingUpload['key']
+        );
+
+        if (!$result) {
+            return $this->jsonError('Failed to save document. Please try again.');
+        }
+
+        // Clear pending upload
+        session()->remove('pending_upload');
+
+        return $this->jsonSuccess('Document uploaded successfully!', [
+            'redirect' => '/verification-status'
+        ]);
     }
 
     /**

@@ -169,4 +169,20 @@ class UserDocumentModel extends Model
     {
         return $this->where('status', 'PENDING')->countAllResults();
     }
+
+    /**
+     * Check if Aadhaar number is already in use by another user
+     * Only checks PENDING or APPROVED documents
+     * 
+     * @param string $aadharNumber The Aadhaar number to check
+     * @param int $excludeUserId The current user to exclude from check
+     * @return bool True if Aadhaar is already in use by another user
+     */
+    public function isAadhaarInUse(string $aadharNumber, int $excludeUserId): bool
+    {
+        return $this->where('aadhar_number', $aadharNumber)
+            ->where('user_id !=', $excludeUserId)
+            ->whereIn('status', ['PENDING', 'APPROVED'])
+            ->countAllResults() > 0;
+    }
 }

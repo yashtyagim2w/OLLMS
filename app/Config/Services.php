@@ -19,14 +19,16 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
-    /*
-     * public static function example($getShared = true)
-     * {
-     *     if ($getShared) {
-     *         return static::getSharedInstance('example');
-     *     }
-     *
-     *     return new \CodeIgniter\Example();
-     * }
+    /**
+     * S3 Storage Service
+     * Usage: service('s3')->upload($file, 'path')
      */
+    public static function s3(bool $getShared = true): \App\Services\S3Service
+    {
+        if ($getShared) {
+            return static::getSharedInstance('s3');
+        }
+
+        return new \App\Services\S3Service();
+    }
 }
