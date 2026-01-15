@@ -185,4 +185,45 @@ class UserDocumentModel extends Model
             ->whereIn('status', ['PENDING', 'APPROVED'])
             ->countAllResults() > 0;
     }
+
+    /**
+     * Get count of documents approved on a specific date
+     */
+    public function getApprovedOnDate(string $date): int
+    {
+        return $this->where('status', 'APPROVED')
+            ->where('DATE(reviewed_at)', $date)
+            ->countAllResults();
+    }
+
+    /**
+     * Get count of documents approved today
+     */
+    public function getApprovedToday(): int
+    {
+        return $this->getApprovedOnDate(date('Y-m-d'));
+    }
+
+    /**
+     * Update Aadhaar number for a document
+     */
+    public function updateAadharNumber(int $documentId, string $aadharNumber): bool
+    {
+        return $this->update($documentId, ['aadhar_number' => $aadharNumber]);
+    }
+
+    /**
+     * Update document status directly
+     */
+    public function updateStatus(int $documentId, string $status): bool
+    {
+        $validStatuses = ['PENDING', 'APPROVED', 'REJECTED'];
+        if (!in_array($status, $validStatuses)) {
+            return false;
+        }
+        return $this->update($documentId, [
+            'status' => $status,
+            'reviewed_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
 }

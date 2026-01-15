@@ -13,18 +13,13 @@ class AdminController extends BaseController
      */
     public function dashboard()
     {
-        return view('admin/dashboard', [
+        $userService = service('users');
+        $stats = $userService->getDashboardStats();
+
+        return view('admin/dashboard', array_merge([
             'pageTitle' => 'Dashboard',
             'adminName' => 'Admin',
-            'totalUsers' => 156,
-            'pendingVerifications' => 12,
-            'approvedToday' => 8,
-            'certificatesIssued' => 89,
-            'newRegistrations' => 45,
-            'testsTaken' => 38,
-            'passRate' => 76,
-            'videosWatched' => 234
-        ]);
+        ], $stats));
     }
 
     /**
@@ -247,68 +242,113 @@ class AdminController extends BaseController
      */
     public function getUsers()
     {
-        $page = $this->request->getGet('page') ?? 1;
-        $limit = 10;
-        $status = $this->request->getGet('status');
-        $testStatus = $this->request->getGet('test_status');
-        $search = $this->request->getGet('search');
+        $userService = service('users');
 
-        // Mock Data
-        $users = [
-            ['id' => 1, 'first_name' => 'Rahul', 'last_name' => 'Sharma', 'email' => 'rahul@email.com', 'dob' => '1998-03-15', 'docStatus' => 'APPROVED', 'videoProgress' => 100, 'testResult' => 'PASS', 'hasCert' => true],
-            ['id' => 2, 'first_name' => 'Priya', 'last_name' => 'Patel', 'email' => 'priya@email.com', 'dob' => '2000-07-22', 'docStatus' => 'APPROVED', 'videoProgress' => 80, 'testResult' => 'FAIL', 'hasCert' => false],
-            ['id' => 3, 'first_name' => 'Amit', 'last_name' => 'Kumar', 'email' => 'amit@email.com', 'dob' => '1999-11-08', 'docStatus' => 'PENDING', 'videoProgress' => 0, 'testResult' => null, 'hasCert' => false],
-            ['id' => 4, 'first_name' => 'Neha', 'last_name' => 'Singh', 'email' => 'neha@email.com', 'dob' => '2001-02-14', 'docStatus' => 'REJECTED', 'videoProgress' => 0, 'testResult' => null, 'hasCert' => false],
-            ['id' => 5, 'first_name' => 'Vikram', 'last_name' => 'Singh', 'email' => 'vikram@email.com', 'dob' => '1997-05-10', 'docStatus' => 'APPROVED', 'videoProgress' => 100, 'testResult' => 'PASS', 'hasCert' => true],
-            ['id' => 6, 'first_name' => 'Anjali', 'last_name' => 'Roy', 'email' => 'anjali@email.com', 'dob' => '2002-09-01', 'docStatus' => 'PENDING', 'videoProgress' => 25, 'testResult' => null, 'hasCert' => false],
-            ['id' => 7, 'first_name' => 'Mohammed', 'last_name' => 'Ali', 'email' => 'ali@email.com', 'dob' => '1995-12-30', 'docStatus' => 'APPROVED', 'videoProgress' => 100, 'testResult' => 'PASS', 'hasCert' => true],
-            ['id' => 8, 'first_name' => 'Kavita', 'last_name' => 'Krishnan', 'email' => 'kavita@email.com', 'dob' => '1998-08-15', 'docStatus' => 'APPROVED', 'videoProgress' => 60, 'testResult' => null, 'hasCert' => false],
-            ['id' => 9, 'first_name' => 'Arjun', 'last_name' => 'Reddy', 'email' => 'arjun@email.com', 'dob' => '2000-01-26', 'docStatus' => 'REJECTED', 'videoProgress' => 0, 'testResult' => null, 'hasCert' => false],
-            ['id' => 10, 'first_name' => 'Meera', 'last_name' => 'Nair', 'email' => 'meera@email.com', 'dob' => '1996-06-12', 'docStatus' => 'PENDING', 'videoProgress' => 45, 'testResult' => null, 'hasCert' => false],
-            ['id' => 11, 'first_name' => 'Suresh', 'last_name' => 'Babu', 'email' => 'suresh@email.com', 'dob' => '1990-03-03', 'docStatus' => 'APPROVED', 'videoProgress' => 100, 'testResult' => 'FAIL', 'hasCert' => false],
-            ['id' => 12, 'first_name' => 'Divya', 'last_name' => 'Thomas', 'email' => 'divya@email.com', 'dob' => '2001-11-20', 'docStatus' => 'APPROVED', 'videoProgress' => 90, 'testResult' => null, 'hasCert' => false],
+        $filters = [
+            'search' => $this->request->getGet('search'),
+            'status' => $this->request->getGet('status'),
+            'test_status' => $this->request->getGet('test_status'),
+            'sort_by' => $this->request->getGet('sort_by'),
+            'sort_order' => $this->request->getGet('sort_order'),
         ];
 
-        // Filtering
-        if ($status) {
-            $users = array_filter($users, fn($item) => strtolower($item['docStatus']) === strtolower($status));
-        }
-        if ($testStatus) {
-            $users = array_filter($users, function ($item) use ($testStatus) {
-                if ($testStatus === 'passed') return $item['testResult'] === 'PASS';
-                if ($testStatus === 'failed') return $item['testResult'] === 'FAIL';
-                if ($testStatus === 'not_taken') return $item['testResult'] === null;
-                return true;
-            });
-        }
-        if ($search) {
-            $users = array_filter(
-                $users,
-                fn($item) =>
-                str_contains(strtolower($item['first_name']), strtolower($search)) ||
-                    str_contains(strtolower($item['last_name']), strtolower($search)) ||
-                    str_contains(strtolower($item['email']), strtolower($search))
-            );
-        }
+        $page = (int) ($this->request->getGet('page') ?? 1);
+        $limit = (int) ($this->request->getGet('limit') ?? 10);
 
-        // Pagination
-        $total = count($users);
-        $totalPages = ceil($total / $limit);
-        $offset = ($page - 1) * $limit;
-        $users = array_slice($users, $offset, $limit);
+        $result = $userService->getUsers($filters, $page, $limit);
 
         return $this->response->setJSON([
             'success' => true,
-            'data' => [
-                'data' => array_values($users),
-                'pagination' => [
-                    'page' => (int)$page,
-                    'limit' => $limit,
-                    'totalPages' => $totalPages,
-                    'totalRecords' => $total
-                ]
-            ]
+            'data' => $result,
         ]);
+    }
+
+    /**
+     * Get Single User API
+     */
+    public function getUser($id)
+    {
+        $userService = service('users');
+        $user = $userService->getUserById((int) $id);
+
+        if (!$user) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'User not found',
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'data' => $user,
+        ]);
+    }
+
+    /**
+     * Update User API
+     */
+    public function updateUser($id)
+    {
+        $userService = service('users');
+
+        $data = [
+            'first_name' => $this->request->getPost('first_name'),
+            'last_name' => $this->request->getPost('last_name'),
+            'email' => $this->request->getPost('email'),
+            'dob' => $this->request->getPost('dob'),
+            'aadhar_number' => $this->request->getPost('aadhar_number'),
+            'verification_status' => $this->request->getPost('verification_status'),
+            'doc_status' => $this->request->getPost('doc_status'),
+        ];
+
+        // Remove empty values
+        $data = array_filter($data, fn($v) => $v !== null && $v !== '');
+
+        $result = $userService->updateUser((int) $id, $data);
+
+        return $this->response->setJSON($result);
+    }
+
+    /**
+     * Ban User API (Soft Delete)
+     */
+    public function banUser($id)
+    {
+        $userService = service('users');
+        $result = $userService->banUser((int) $id);
+
+        return $this->response->setJSON($result);
+    }
+
+    /**
+     * Activate User API (Restore)
+     */
+    public function activateUser($id)
+    {
+        $userService = service('users');
+        $result = $userService->activateUser((int) $id);
+
+        return $this->response->setJSON($result);
+    }
+
+    /**
+     * Set User Password API
+     */
+    public function setUserPassword($id)
+    {
+        $password = $this->request->getPost('password');
+
+        if (empty($password) || strlen($password) < 8) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Password must be at least 8 characters',
+            ]);
+        }
+
+        $userService = service('users');
+        $result = $userService->setPassword((int) $id, $password);
+
+        return $this->response->setJSON($result);
     }
 
     /**

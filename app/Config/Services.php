@@ -31,4 +31,17 @@ class Services extends BaseService
 
         return new \App\Services\S3Service();
     }
+
+    /**
+     * User Management Service
+     * Usage: service('users')->getUsers($filters)
+     */
+    public static function users(bool $getShared = true): \App\Services\UserService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('users');
+        }
+
+        return new \App\Services\UserService();
+    }
 }

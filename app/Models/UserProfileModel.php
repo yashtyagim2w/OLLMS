@@ -114,4 +114,174 @@ class UserProfileModel extends Model
         $profile = $this->getByUserId($userId);
         return $profile && $profile['verification_status'] === 'COMPLETED';
     }
+
+    /**
+     * Get total count of registered users (with profiles)
+     */
+    public function getTotalCount(): int
+    {
+        return $this->countAllResults();
+    }
+
+    /**
+     * Get count of new registrations for a specific date
+     */
+    public function getRegistrationsOnDate(string $date): int
+    {
+        return $this->where('DATE(created_at)', $date)->countAllResults();
+    }
+
+    /**
+     * Get count of new registrations today
+     */
+    public function getRegistrationsToday(): int
+    {
+        return $this->getRegistrationsOnDate(date('Y-m-d'));
+    }
+
+    /**
+     * Update profile by user ID
+     */
+    public function updateByUserId(int $userId, array $data): bool
+    {
+        return $this->where('user_id', $userId)->set($data)->update();
+    }
+
+    /**
+     * Get paginated list of users with filters for admin panel
+     * Complex join query across users, profiles, identities, and documents
+     */
+    public function getUsersForAdmin(array $filters = [], int $page = 1, int $limit = 10): array
+    {
+        $db = db_connect();
+        $builder = $db->table('users u')
+            ->select('
+                u.id,
+                u.username,
+                u.active,
+                u.status,
+                auth.secret as email,
+                p.first_name,
+                p.last_name,
+                p.dob,
+                p.verification_status,
+                d.aadhar_number,
+                d.status as doc_status
+            ')
+            ->join('auth_identities auth', 'auth.user_id = u.id AND auth.type = "email_password"', 'left')
+            ->join('user_profiles p', 'p.user_id = u.id', 'inner')
+            ->join('user_documents d', 'd.user_id = u.id AND d.id = (SELECT MAX(id) FROM user_documents WHERE user_id = u.id)', 'left')
+            ->where('u.deleted_at IS NULL')
+            ->whereIn('u.id', function ($subquery) {
+                return $subquery->select('user_id')
+                    ->from('auth_groups_users')
+                    ->where('group', 'user');
+            });
+
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $builder->groupStart()
+                ->like('p.first_name', $search)
+                ->orLike('p.last_name', $search)
+                ->orLike('auth.secret', $search)
+                ->orLike('d.aadhar_number', $search)
+                ->groupEnd();
+        }
+
+        // Apply document status filter
+        if (!empty($filters['status'])) {
+            $status = strtoupper($filters['status']);
+            if ($status === 'NOT_UPLOADED') {
+                $builder->where('d.id IS NULL');
+            } else {
+                $builder->where('d.status', $status);
+            }
+        }
+
+        // Apply sorting
+        $sortBy = $filters['sort_by'] ?? 'u.created_at';
+        $sortOrder = $filters['sort_order'] ?? 'DESC';
+
+        $sortMapping = [
+            'name' => 'p.first_name',
+            'email' => 'auth.secret',
+            'created_at' => 'u.created_at',
+        ];
+
+        $orderBy = $sortMapping[$sortBy] ?? $sortBy;
+        $builder->orderBy($orderBy, $sortOrder);
+
+        // Get total count
+        $totalBuilder = clone $builder;
+        $total = $totalBuilder->countAllResults(false);
+
+        // Apply pagination
+        $offset = ($page - 1) * $limit;
+        $users = $builder->limit($limit, $offset)->get()->getResultArray();
+
+        return [
+            'data' => $users,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+        ];
+    }
+
+    /**
+     * Get single user with full details for admin
+     */
+    public function getUserDetailsForAdmin(int $userId): ?array
+    {
+        $db = db_connect();
+        return $db->table('users u')
+            ->select('
+                u.id,
+                u.username,
+                u.active,
+                auth.secret as email,
+                p.first_name,
+                p.last_name,
+                p.dob,
+                p.verification_status,
+                d.id as document_id,
+                d.aadhar_number,
+                d.status as doc_status,
+                d.document_url
+            ')
+            ->join('auth_identities auth', 'auth.user_id = u.id AND auth.type = "email_password"', 'left')
+            ->join('user_profiles p', 'p.user_id = u.id', 'left')
+            ->join('user_documents d', 'd.user_id = u.id AND d.id = (SELECT MAX(id) FROM user_documents WHERE user_id = u.id)', 'left')
+            ->where('u.id', $userId)
+            ->get()
+            ->getRowArray();
+    }
+
+    /**
+     * Get user email by user ID (from auth_identities)
+     */
+    public function getUserEmail(int $userId): ?string
+    {
+        $db = db_connect();
+        $result = $db->table('auth_identities')
+            ->select('secret')
+            ->where('user_id', $userId)
+            ->where('type', 'email_password')
+            ->get()
+            ->getRowArray();
+
+        return $result['secret'] ?? null;
+    }
+
+    /**
+     * Update user email in auth_identities
+     */
+    public function updateUserEmail(int $userId, string $email): bool
+    {
+        $db = db_connect();
+        return $db->table('auth_identities')
+            ->where('user_id', $userId)
+            ->where('type', 'email_password')
+            ->update(['secret' => $email]);
+    }
 }
