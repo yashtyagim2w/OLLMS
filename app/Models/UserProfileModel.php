@@ -199,6 +199,15 @@ class UserProfileModel extends Model
             }
         }
 
+        // Apply active status filter
+        if (!empty($filters['active_status'])) {
+            if ($filters['active_status'] === 'active') {
+                $builder->where('u.active', 1);
+            } elseif ($filters['active_status'] === 'inactive') {
+                $builder->where('u.active', 0);
+            }
+        }
+
         // Apply sorting
         $sortBy = $filters['sort_by'] ?? 'u.created_at';
         $sortOrder = $filters['sort_order'] ?? 'DESC';
@@ -206,6 +215,7 @@ class UserProfileModel extends Model
         $sortMapping = [
             'name' => 'p.first_name',
             'email' => 'auth.secret',
+            'dob' => 'p.dob',
             'created_at' => 'u.created_at',
         ];
 

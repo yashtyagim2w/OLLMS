@@ -248,6 +248,7 @@ class AdminController extends BaseController
             'search' => $this->request->getGet('search'),
             'status' => $this->request->getGet('status'),
             'test_status' => $this->request->getGet('test_status'),
+            'active_status' => $this->request->getGet('active_status'),
             'sort_by' => $this->request->getGet('sort_by'),
             'sort_order' => $this->request->getGet('sort_order'),
         ];
@@ -299,6 +300,7 @@ class AdminController extends BaseController
             'aadhar_number' => $this->request->getPost('aadhar_number'),
             'verification_status' => $this->request->getPost('verification_status'),
             'doc_status' => $this->request->getPost('doc_status'),
+            'active' => $this->request->getPost('active'),
         ];
 
         // Remove empty values

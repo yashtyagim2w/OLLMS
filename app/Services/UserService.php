@@ -9,6 +9,7 @@ use App\Models\TestModel;
 use App\Models\CertificateModel;
 use CodeIgniter\Shield\Models\UserModel;
 use CodeIgniter\Shield\Entities\User;
+use CodeIgniter\HTTP\ResponseInterface;
 
 /**
  * User Service
@@ -130,6 +131,7 @@ class UserService
             $currentEmail = $this->profileModel->getUserEmail($id);
             $latestDoc = $this->documentModel->getLatestDocument($id);
             $currentVerificationStatus = $currentProfile['verification_status'] ?? 'PENDING';
+            $currentActiveStatus = $user->active ?? 1;
 
             // Check if anything has changed
             $hasFirstNameChanged = $data['first_name'] !== ($currentProfile['first_name'] ?? '');
@@ -139,16 +141,24 @@ class UserService
             $hasAadharChanged = !empty($data['aadhar_number']) && $data['aadhar_number'] !== ($latestDoc['aadhar_number'] ?? '');
             $hasVerificationStatusChanged = isset($data['verification_status']) && $data['verification_status'] !== $currentVerificationStatus;
             $hasDocStatusChanged = !empty($data['doc_status']) && $data['doc_status'] !== ($latestDoc['status'] ?? '');
+            $hasActiveStatusChanged = isset($data['active']) && (int)$data['active'] !== (int)$currentActiveStatus;
 
-            if (!$hasFirstNameChanged && !$hasLastNameChanged && !$hasEmailChanged && !$hasDobChanged && !$hasAadharChanged && !$hasVerificationStatusChanged && !$hasDocStatusChanged) {
-                return ['success' => false, 'message' => 'No changes detected. Please modify at least one field to update.'];
+            if (!$hasFirstNameChanged && !$hasLastNameChanged && !$hasEmailChanged && !$hasDobChanged && !$hasAadharChanged && !$hasVerificationStatusChanged && !$hasDocStatusChanged && !$hasActiveStatusChanged) {
+                return ['success' => false, 'message' => 'No changes detected. Please modify at least one field to update.', 'status_code' => ResponseInterface::HTTP_BAD_REQUEST];
             }
             // Update email if changed
-            if (!empty($data['email'])) {
+            if (!empty($data['email']) && $hasEmailChanged) {
                 // Validate email format
                 if (!is_valid_email($data['email'])) {
-                    return ['success' => false, 'message' => get_validation_message('email')];
+                    return ['success' => false, 'message' => get_validation_message('email'), 'status_code' => ResponseInterface::HTTP_BAD_REQUEST];
                 }
+
+                // Check if email is already used by another user
+                $existingUser = $this->profileModel->getUserByEmail($data['email']);
+                if ($existingUser && $existingUser['user_id'] != $id) {
+                    return ['success' => false, 'message' => 'This email address is already registered to another user.', 'status_code' => ResponseInterface::HTTP_BAD_REQUEST];
+                }
+
                 $this->profileModel->updateUserEmail($id, $data['email']);
             }
 
@@ -178,10 +188,17 @@ class UserService
             }
 
             // Validate Aadhaar format if provided
-            if (!empty($data['aadhar_number'])) {
+            if (!empty($data['aadhar_number']) && $hasAadharChanged) {
                 if (!is_valid_aadhaar($data['aadhar_number'])) {
-                    return ['success' => false, 'message' => get_validation_message('aadhaar')];
+                    return ['success' => false, 'message' => get_validation_message('aadhaar'), 'status_code' => ResponseInterface::HTTP_BAD_REQUEST];
                 }
+
+                // Check if Aadhaar is already used by another user
+                $existingDoc = $this->documentModel->getDocumentByAadhar($data['aadhar_number']);
+                if ($existingDoc && $existingDoc['user_id'] != $id) {
+                    return ['success' => false, 'message' => 'This Aadhaar number is already registered to another user.', 'status_code' => ResponseInterface::HTTP_BAD_REQUEST];
+                }
+
                 $latestDoc = $this->documentModel->getLatestDocument($id);
                 if ($latestDoc) {
                     $this->documentModel->updateAadharNumber($latestDoc['id'], $data['aadhar_number']);
@@ -201,14 +218,39 @@ class UserService
                 }
             }
 
+            // Track if email was sent (to avoid duplicate emails)
+            $emailSent = false;
+
+            // PRIORITY 1: Account activation/deactivation (highest priority)
+            // Only send email if active status actually changed
+            if (isset($data['active']) && $hasActiveStatusChanged) {
+                $newActiveStatus = (int) $data['active'];
+
+                // Update the user's active status in Shield's users table
+                $this->userModel->update($id, ['active' => $newActiveStatus]);
+
+                // Send email notification for status change
+                $this->sendAccountStatusEmail($id, $newActiveStatus);
+                $emailSent = true;
+            }
+
+            // PRIORITY 2: Document status change (if no higher priority email sent)
+            if (!$emailSent && $hasDocStatusChanged) {
+                $this->sendDocumentStatusEmail($id, $data['doc_status']);
+                $emailSent = true;
+            }
+
+            // PRIORITY 3: Profile update (if no higher priority email sent)
+            if (!$emailSent && ($hasFirstNameChanged || $hasLastNameChanged || $hasEmailChanged || $hasDobChanged || $hasAadharChanged || $hasVerificationStatusChanged)) {
+                $this->sendProfileUpdatedEmail($id);
+                $emailSent = true;
+            }
+
             $db->transComplete();
 
             if ($db->transStatus() === false) {
                 return ['success' => false, 'message' => 'Database error'];
             }
-
-            // Send notification email
-            $this->sendProfileUpdatedEmail($id);
 
             return ['success' => true, 'message' => 'User updated successfully'];
         } catch (\Exception $e) {
@@ -395,6 +437,52 @@ class UserService
         $emailService->setSubject('Account Reactivated - OLLMS');
         $emailService->setMessage(view('emails/account_reactivated', [
             'name' => $name,
+        ]));
+        $emailService->send();
+    }
+
+    /**
+     * Send account status change notification email
+     * Wrapper method that calls the appropriate email based on status
+     */
+    private function sendAccountStatusEmail(int $userId, int $isActive): void
+    {
+        if ($isActive) {
+            $this->sendAccountReactivatedEmail($userId);
+        } else {
+            $this->sendAccountDeactivatedEmail($userId);
+        }
+    }
+
+    /**
+     * Send document status change notification email
+     */
+    private function sendDocumentStatusEmail(int $userId, string $status): void
+    {
+        $email = $this->getUserEmail($userId);
+        $name = $this->getUserName($userId);
+
+        if (!$email) return;
+
+        $statusLabels = [
+            'APPROVED' => 'Document Approved',
+            'REJECTED' => 'Document Rejected',
+            'PENDING' => 'Document Under Review',
+        ];
+
+        $subject = ($statusLabels[$status] ?? 'Document Status Update') . ' - OLLMS';
+        $template = match ($status) {
+            'APPROVED' => 'emails/document_approved',
+            'REJECTED' => 'emails/document_rejected',
+            default => 'emails/document_status_update',
+        };
+
+        $emailService = \Config\Services::email();
+        $emailService->setTo($email);
+        $emailService->setSubject($subject);
+        $emailService->setMessage(view($template, [
+            'name' => $name,
+            'status' => $status,
         ]));
         $emailService->send();
     }
