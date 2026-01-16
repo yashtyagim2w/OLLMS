@@ -124,10 +124,11 @@
                             <div class="form-group">
                                 <label class="form-label">First Name <span class="required">*</span></label>
                                 <input type="text" class="form-control" id="editFirstName"
-                                    minlength="2" maxlength="100"
+                                    minlength="<?= NAME_MIN_LENGTH ?>" maxlength="<?= NAME_MAX_LENGTH ?>"
                                     pattern="<?= get_name_pattern_html() ?>"
                                     title="<?= get_validation_message('name') ?>"
-                                    oninput="this.value = this.value.replace(/[^A-Za-z\s\-']/g, '')">
+                                    oninput="this.value = this.value.replace(/[^A-Za-z\s\-']/g, '')"
+                                    required>
                                 <div id="firstNameError" class="invalid-feedback"></div>
                             </div>
                         </div>
@@ -135,10 +136,11 @@
                             <div class="form-group">
                                 <label class="form-label">Last Name <span class="required">*</span></label>
                                 <input type="text" class="form-control" id="editLastName"
-                                    minlength="2" maxlength="100"
+                                    minlength="<?= NAME_MIN_LENGTH ?>" maxlength="<?= NAME_MAX_LENGTH ?>"
                                     pattern="<?= get_name_pattern_html() ?>"
                                     title="<?= get_validation_message('name') ?>"
-                                    oninput="this.value = this.value.replace(/[^A-Za-z\s\-']/g, '')">
+                                    oninput="this.value = this.value.replace(/[^A-Za-z\s\-']/g, '')"
+                                    required>
                                 <div id="lastNameError" class="invalid-feedback"></div>
                             </div>
                         </div>
@@ -146,9 +148,11 @@
                     <div class="form-group">
                         <label class="form-label">Email Address <span class="required">*</span></label>
                         <input type="email" class="form-control" id="editEmail"
+                            maxlength="<?= EMAIL_MAX_LENGTH ?>"
                             pattern="<?= get_email_pattern_html() ?>"
                             title="<?= get_validation_message('email') ?>"
-                            oninput="this.value = this.value.replace(/[^A-Za-z0-9@.+]/g, '')">
+                            oninput="this.value = this.value.replace(/[^A-Za-z0-9@.+\-_]/g, '')"
+                            required>
                         <div id="emailError" class="invalid-feedback"></div>
                     </div>
                     <div class="row">
@@ -166,11 +170,11 @@
                             <div class="form-group">
                                 <label class="form-label">Aadhar Number <span class="required">*</span></label>
                                 <input type="text" class="form-control" id="editAadharNumber"
-                                    minlength="12" maxlength="12"
+                                    minlength="<?= AADHAR_LENGTH ?>" maxlength="<?= AADHAR_LENGTH ?>"
                                     pattern="<?= get_aadhaar_pattern_html() ?>"
                                     title="<?= get_validation_message('aadhaar') ?>"
                                     oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                                    placeholder="12 digit Aadhar"
+                                    placeholder="<?= AADHAR_LENGTH ?> digit Aadhar"
                                     required>
                             </div>
                         </div>

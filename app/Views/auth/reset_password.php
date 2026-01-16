@@ -34,28 +34,36 @@
 
                 <div class="mb-3">
                     <label for="password" class="form-label">New Password <span class="text-danger">*</span></label>
+                    <?php helper('validation'); ?>
                     <div class="input-group">
                         <input type="password" name="password" id="password" class="form-control"
-                            placeholder="Enter new password (min 8 characters)" required minlength="8">
+                            placeholder="Enter new password (min <?= PASSWORD_MIN_LENGTH ?> characters)"
+                            minlength="<?= PASSWORD_MIN_LENGTH ?>" maxlength="<?= PASSWORD_MAX_LENGTH ?>"
+                            title="<?= get_validation_message('password') ?>"
+                            required>
                         <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password')">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
+                    <div id="passwordError" class="invalid-feedback"></div>
                 </div>
 
                 <div class="mb-4">
                     <label for="password_confirm" class="form-label">Confirm Password <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <input type="password" name="password_confirm" id="password_confirm" class="form-control"
-                            placeholder="Confirm new password" required>
+                            placeholder="Confirm new password"
+                            minlength="<?= PASSWORD_MIN_LENGTH ?>" maxlength="<?= PASSWORD_MAX_LENGTH ?>"
+                            required>
                         <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password_confirm')">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
+                    <div id="confirmPasswordError" class="invalid-feedback"></div>
                 </div>
 
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary btn-lg">
+                    <button type="submit" class="btn btn-primary btn-lg" id="resetBtn">
                         <i class="bi bi-check-circle me-2"></i>Reset Password
                     </button>
                 </div>
@@ -83,32 +91,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('resetPasswordForm');
-
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('password_confirm').value;
-
-                if (password.length < 8) {
-                    e.preventDefault();
-                    SwalHelper.error('Validation Error', 'Password must be at least 8 characters long.');
-                    return;
-                }
-
-                if (password !== confirmPassword) {
-                    e.preventDefault();
-                    SwalHelper.error('Validation Error', 'Passwords do not match.');
-                    return;
-                }
-
-                const submitBtn = form.querySelector('button[type="submit"]');
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Resetting...';
-            });
-        }
-    });
-</script>
+<script type="module" src="/assets/js/auth/reset-password.js"></script>
 <?= $this->endSection() ?>

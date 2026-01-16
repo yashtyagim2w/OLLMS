@@ -25,13 +25,19 @@
 
             <div class="mb-4">
                 <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                <?php helper('validation'); ?>
                 <input type="email" name="email" id="email" class="form-control form-control-lg"
-                    placeholder="Enter your registered email" value="<?= old('email') ?>" required autofocus>
+                    placeholder="Enter your registered email" value="<?= old('email') ?>"
+                    maxlength="<?= EMAIL_MAX_LENGTH ?>"
+                    pattern="<?= get_email_pattern_html() ?>"
+                    title="<?= get_validation_message('email') ?>"
+                    required autofocus>
+                <div id="emailError" class="invalid-feedback"></div>
                 <div class="form-text">We'll send a password reset link to this email</div>
             </div>
 
             <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                     <i class="bi bi-send me-2"></i>Send Reset Link
                 </button>
             </div>
@@ -50,15 +56,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('forgotPasswordForm');
-
-        form.addEventListener('submit', function(e) {
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
-        });
-    });
-</script>
+<script type="module" src="/assets/js/auth/forgot-password.js"></script>
 <?= $this->endSection() ?>

@@ -28,21 +28,23 @@
                     <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
                     <input type="text" name="first_name" id="first_name" class="form-control"
                         placeholder="Enter first name" value="<?= old('first_name') ?>"
-                        minlength="2" maxlength="100"
+                        minlength="<?= NAME_MIN_LENGTH ?>" maxlength="<?= NAME_MAX_LENGTH ?>"
                         pattern="<?= get_name_pattern_html() ?>"
                         title="<?= get_validation_message('name') ?>"
                         oninput="this.value = this.value.replace(/[^A-Za-z\s\-']/g, '')"
                         required>
+                    <div id="firstNameError" class="invalid-feedback"></div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
                     <input type="text" name="last_name" id="last_name" class="form-control"
                         placeholder="Enter last name" value="<?= old('last_name') ?>"
-                        minlength="2" maxlength="100"
+                        minlength="<?= NAME_MIN_LENGTH ?>" maxlength="<?= NAME_MAX_LENGTH ?>"
                         pattern="<?= get_name_pattern_html() ?>"
                         title="<?= get_validation_message('name') ?>"
                         oninput="this.value = this.value.replace(/[^A-Za-z\s\-']/g, '')"
                         required>
+                    <div id="lastNameError" class="invalid-feedback"></div>
                 </div>
             </div>
 
@@ -50,9 +52,11 @@
                 <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
                 <input type="email" name="email" id="email" class="form-control"
                     placeholder="Enter email address" value="<?= old('email') ?>"
+                    maxlength="<?= EMAIL_MAX_LENGTH ?>"
                     pattern="<?= get_email_pattern_html() ?>"
                     title="<?= get_validation_message('email') ?>"
                     required>
+                <div id="emailError" class="invalid-feedback"></div>
             </div>
 
             <div class="mb-3">
@@ -62,9 +66,10 @@
                         placeholder="DD/MM/YYYY" value="<?= old('dob') ?>"
                         data-min-date="<?= get_min_dob() ?>"
                         data-max-date="<?= get_max_dob() ?>"
-                        readonly required>
+                        readonly>
                     <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
                 </div>
+                <div id="dobError" class="invalid-feedback"></div>
                 <div class="form-text"><?= get_validation_message('dob') ?></div>
             </div>
 
@@ -72,22 +77,29 @@
                 <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
                 <div class="input-group">
                     <input type="password" name="password" id="password" class="form-control"
-                        placeholder="Create password (min 8 characters)" required minlength="8">
+                        placeholder="Create password (min <?= PASSWORD_MIN_LENGTH ?> characters)"
+                        minlength="<?= PASSWORD_MIN_LENGTH ?>" maxlength="<?= PASSWORD_MAX_LENGTH ?>"
+                        title="<?= get_validation_message('password') ?>"
+                        required>
                     <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password')">
                         <i class="bi bi-eye"></i>
                     </button>
                 </div>
+                <div id="passwordError" class="invalid-feedback"></div>
             </div>
 
             <div class="mb-3">
                 <label for="password_confirm" class="form-label">Confirm Password <span class="text-danger">*</span></label>
                 <div class="input-group">
                     <input type="password" name="password_confirm" id="password_confirm" class="form-control"
-                        placeholder="Confirm password" required>
+                        placeholder="Confirm password"
+                        minlength="<?= PASSWORD_MIN_LENGTH ?>" maxlength="<?= PASSWORD_MAX_LENGTH ?>"
+                        required>
                     <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password_confirm')">
                         <i class="bi bi-eye"></i>
                     </button>
                 </div>
+                <div id="confirmPasswordError" class="invalid-feedback"></div>
             </div>
 
             <div class="mb-4 form-check">
@@ -123,66 +135,5 @@
 <?= $this->section('scripts') ?>
 <!-- Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('registerForm');
-
-        // Calculate max date (18 years ago from today)
-        const today = new Date();
-        const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-
-        // Initialize Flatpickr date picker
-        const dobPicker = flatpickr("#dob", {
-            dateFormat: "d/m/Y",
-            maxDate: maxDate,
-            minDate: "01/01/1940",
-            defaultDate: null,
-            allowInput: false,
-            disableMobile: true,
-            monthSelectorType: "dropdown",
-            yearSelectorType: "dropdown",
-            onReady: function(selectedDates, dateStr, instance) {
-                // Add clear button
-                const clearBtn = document.createElement('button');
-                clearBtn.type = 'button';
-                clearBtn.className = 'flatpickr-clear';
-                clearBtn.innerHTML = 'Clear';
-                clearBtn.onclick = function() {
-                    instance.clear();
-                };
-            }
-        });
-
-        // Validate age on form submit
-        form.addEventListener('submit', function(e) {
-            const dobValue = document.getElementById('dob').value;
-
-            if (!dobValue) {
-                e.preventDefault();
-                SwalHelper.error('Date Required', 'Please select your date of birth');
-                return false;
-            }
-
-            // Parse DD/MM/YYYY
-            const parts = dobValue.split('/');
-            const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1;
-            const year = parseInt(parts[2], 10);
-            const dob = new Date(year, month, day);
-
-            // Calculate age
-            let age = today.getFullYear() - dob.getFullYear();
-            const monthDiff = today.getMonth() - dob.getMonth();
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-                age--;
-            }
-
-            if (age < 18) {
-                e.preventDefault();
-                SwalHelper.error('Age Requirement', 'You must be at least 18 years old to register');
-                return false;
-            }
-        });
-    });
-</script>
+<script type="module" src="/assets/js/auth/register.js"></script>
 <?= $this->endSection() ?>

@@ -14,40 +14,47 @@
  *     submitButton: '#submitBtn',
  *     onSubmit: (data) => { ... }
  * });
+ * 
+ * Note: Patterns are loaded from window.ValidationPatterns (injected from PHP) for single source of truth.
  */
 
+// Get patterns from PHP (injected via auth layout) or use fallbacks
+const patterns = window.ValidationPatterns || {};
+const messages = patterns.messages || {};
+
 // ============================================
-// VALIDATION RULES
+// VALIDATION RULES (Using PHP constants from database schema)
 // ============================================
 export const validationRules = {
     firstName: {
         required: true,
-        minLength: 2,
-        maxLength: 100,
-        pattern: /^[A-Za-z\s\-']+$/,
-        message: 'First name must be 2-100 characters, letters only.',
+        minLength: patterns.nameMinLength || 2,
+        maxLength: patterns.nameMaxLength || 100,
+        pattern: patterns.name || /^[A-Za-z\s\-']+$/,
+        message: messages.name || 'First name must be 2-100 characters, letters only.',
         sanitize: (v) => v.replace(/[^A-Za-z\s\-']/g, '')
     },
     lastName: {
         required: true,
-        minLength: 2,
-        maxLength: 100,
-        pattern: /^[A-Za-z\s\-']+$/,
-        message: 'Last name must be 2-100 characters, letters only.',
+        minLength: patterns.nameMinLength || 2,
+        maxLength: patterns.nameMaxLength || 100,
+        pattern: patterns.name || /^[A-Za-z\s\-']+$/,
+        message: messages.name || 'Last name must be 2-100 characters, letters only.',
         sanitize: (v) => v.replace(/[^A-Za-z\s\-']/g, '')
     },
     email: {
         required: true,
-        pattern: /^[A-Za-z0-9+.]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
-        message: 'Please enter a valid email address.',
-        sanitize: (v) => v.replace(/[^A-Za-z0-9@.+]/g, '')
+        maxLength: patterns.emailMaxLength || 255,
+        pattern: patterns.email || /^[A-Za-z0-9+.]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
+        message: messages.email || 'Please enter a valid email address.',
+        sanitize: (v) => v.replace(/[^A-Za-z0-9@.+\-_]/g, '')
     },
     password: {
         required: true,
-        minLength: 8,
-        maxLength: 128,
-        pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
-        message: 'Password must be at least 8 characters with uppercase, lowercase, and number.'
+        minLength: patterns.passwordMinLength || 8,
+        maxLength: patterns.passwordMaxLength || 128,
+        pattern: patterns.password || /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
+        message: messages.password || 'Password must be at least 8 characters with uppercase, lowercase, and number.'
     },
     confirmPassword: {
         required: true,
@@ -57,19 +64,19 @@ export const validationRules = {
     dob: {
         required: true,
         type: 'date',
-        minAge: 18,
-        message: 'Date of birth is required. You must be at least 18 years old.'
+        minAge: patterns.minAge || 18,
+        message: messages.dob || 'Date of birth is required. You must be at least 18 years old.'
     },
     aadhar: {
         required: true,
-        exactLength: 12,
-        pattern: /^\d{12}$/,
-        message: 'Aadhaar must be exactly 12 digits.',
+        exactLength: patterns.aadharLength || 12,
+        pattern: patterns.aadhar || /^\d{12}$/,
+        message: messages.aadhar || 'Aadhaar must be exactly 12 digits.',
         sanitize: (v) => v.replace(/[^0-9]/g, '')
     },
     otp: {
         required: true,
-        exactLength: 6,
+        exactLength: patterns.otpLength || 6,
         pattern: /^\d{6}$/,
         message: 'OTP must be exactly 6 digits.',
         sanitize: (v) => v.replace(/[^0-9]/g, '')
