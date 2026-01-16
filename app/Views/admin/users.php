@@ -28,10 +28,11 @@
 
         <div class="filters-selection">
             <select name="status" class="form-select">
-                <option value="">All Status</option>
+                <option value="">Document Status</option>
                 <option value="approved">Approved</option>
                 <option value="pending">Pending</option>
                 <option value="rejected">Rejected</option>
+                <option value="not_uploaded">Not Uploaded</option>
             </select>
 
             <select name="test_status" class="form-select">
@@ -41,10 +42,17 @@
                 <option value="not_taken">Not Taken</option>
             </select>
 
+            <select name="active_status" class="form-select">
+                <option value="">Account Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+
             <select name="sort_by" id="sort_by" class="form-select">
                 <option value="">Sort by</option>
                 <option value="name">Name</option>
                 <option value="email">Email</option>
+                <option value="dob">Age (DOB)</option>
                 <option value="created_at">Registered Date</option>
             </select>
 
@@ -76,6 +84,7 @@
                         <th>Last Name</th>
                         <th>Email</th>
                         <th>DOB</th>
+                        <th>Status</th>
                         <th>Document Status</th>
                         <th>Video Progress</th>
                         <th>Test Result</th>
@@ -85,7 +94,7 @@
                 </thead>
                 <tbody id="main-table">
                     <tr>
-                        <td colspan="10" class="text-center py-5" style="color: var(--gray-500);">
+                        <td colspan="11" class="text-center py-5" style="color: var(--gray-500);">
                             <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Loading...
                         </td>
                     </tr>
@@ -109,35 +118,80 @@
             <div class="modal-body">
                 <form id="editUserForm">
                     <input type="hidden" id="editUserId">
+                    <?php helper('validation'); ?>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">First Name <span class="required">*</span></label>
-                                <input type="text" class="form-control" id="editFirstName" required>
+                                <input type="text" class="form-control" id="editFirstName"
+                                    minlength="2" maxlength="100"
+                                    pattern="<?= get_name_pattern_html() ?>"
+                                    title="<?= get_validation_message('name') ?>"
+                                    oninput="this.value = this.value.replace(/[^A-Za-z\s\-']/g, '')">
+                                <div id="firstNameError" class="invalid-feedback"></div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Last Name <span class="required">*</span></label>
-                                <input type="text" class="form-control" id="editLastName" required>
+                                <input type="text" class="form-control" id="editLastName"
+                                    minlength="2" maxlength="100"
+                                    pattern="<?= get_name_pattern_html() ?>"
+                                    title="<?= get_validation_message('name') ?>"
+                                    oninput="this.value = this.value.replace(/[^A-Za-z\s\-']/g, '')">
+                                <div id="lastNameError" class="invalid-feedback"></div>
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Email Address <span class="required">*</span></label>
-                        <input type="email" class="form-control" id="editEmail" required>
+                        <input type="email" class="form-control" id="editEmail"
+                            pattern="<?= get_email_pattern_html() ?>"
+                            title="<?= get_validation_message('email') ?>"
+                            oninput="this.value = this.value.replace(/[^A-Za-z0-9@.+]/g, '')">
+                        <div id="emailError" class="invalid-feedback"></div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Date of Birth</label>
-                                <input type="date" class="form-control" id="editDob">
+                                <label class="form-label">Date of Birth <span class="required">*</span></label>
+                                <input type="date" class="form-control" id="editDob"
+                                    min="<?= get_min_dob() ?>"
+                                    max="<?= get_max_dob() ?>"
+                                    title="<?= get_validation_message('dob') ?>">
+                                <div id="dobError" class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Aadhar Number <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="editAadharNumber"
+                                    minlength="12" maxlength="12"
+                                    pattern="<?= get_aadhaar_pattern_html() ?>"
+                                    title="<?= get_validation_message('aadhaar') ?>"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                    placeholder="12 digit Aadhar"
+                                    required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verification Status Toggles -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Email Verification</label>
+                                <select class="form-select" id="editEmailVerification">
+                                    <option value="PENDING">Not Verified</option>
+                                    <option value="COMPLETED">Verified</option>
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Document Status</label>
-                                <select class="form-control form-select" id="editDocStatus">
+                                <select class="form-select" id="editDocStatus">
+                                    <option value="NOT_UPLOADED">Not Uploaded</option>
                                     <option value="PENDING">Pending</option>
                                     <option value="APPROVED">Approved</option>
                                     <option value="REJECTED">Rejected</option>
@@ -145,23 +199,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6">
+
+                    <!-- Account Status -->
+                    <div class="row mt-3">
+                        <div class="col-md-12">
                             <div class="form-group">
-                                <label class="form-label">Test Result</label>
-                                <select class="form-control form-select" id="editTestResult">
-                                    <option value="">Not Taken</option>
-                                    <option value="PASS">Passed</option>
-                                    <option value="FAIL">Failed</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">Certificate Issued</label>
-                                <select class="form-control form-select" id="editHasCert">
-                                    <option value="0">No</option>
-                                    <option value="1">Yes</option>
+                                <label class="form-label">Account Status</label>
+                                <select class="form-select" id="editActiveStatus">
+                                    <option value="1">Active</option>
+                                    <option value="0">Inactive</option>
                                 </select>
                             </div>
                         </div>
@@ -180,101 +226,12 @@
 
 <?= $this->section('scripts') ?>
 <script type="module">
-    import initializeListPage from '/assets/js/list-page.js';
-
-    // Store all users data for editing
-    let allUsersData = [];
-
-    function renderUserRow({
-        row,
-        rowNumber
-    }) {
-        const docStatusPill = row.docStatus === 'APPROVED' ? '<span class="badge badge-success">Approved</span>' :
-            (row.docStatus === 'PENDING' ? '<span class="badge badge-warning">Pending</span>' :
-                '<span class="badge badge-danger">Rejected</span>');
-
-        const testResultPill = row.testResult === 'PASS' ? '<span class="badge badge-success">Passed</span>' :
-            (row.testResult === 'FAIL' ? '<span class="badge badge-danger">Failed</span>' :
-                '<span class="badge badge-secondary">-</span>');
-
-        const certIcon = row.hasCert ?
-            '<i class="bi bi-check-circle-fill text-success" title="Issued"></i>' :
-            '<span class="text-muted">-</span>';
-
-        return `
-            <tr>
-                <td>${rowNumber}</td>
-                <td>${row.first_name}</td>
-                <td>${row.last_name}</td>
-                <td class="text-muted">${row.email}</td>
-                <td>${row.dob}</td>
-                <td>${docStatusPill}</td>
-                <td>
-                    <div class="d-flex align-items-center gap-2">
-                         <div class="progress" style="width: 80px; height: 6px;">
-                            <div class="progress-bar ${row.videoProgress === 100 ? 'bg-success' : 'bg-primary'}" 
-                                style="width: ${row.videoProgress}%"></div>
-                        </div>
-                        <span class="small text-muted">${row.videoProgress}%</span>
-                    </div>
-                </td>
-                <td>${testResultPill}</td>
-                <td class="text-center">${certIcon}</td>
-                <td class="actions">
-                    <button class="btn btn-sm btn-outline-primary" title="Edit User" data-user-id="${row.id}">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-    }
-
-    // Open edit modal with user data
-    window.openEditModal = function(userId) {
-        const user = allUsersData.find(u => u.id == userId);
-        if (!user) return;
-
-        document.getElementById('editUserId').value = user.id;
-        document.getElementById('editFirstName').value = user.first_name;
-        document.getElementById('editLastName').value = user.last_name;
-        document.getElementById('editEmail').value = user.email;
-        document.getElementById('editDob').value = user.dob;
-        document.getElementById('editDocStatus').value = user.docStatus;
-        document.getElementById('editTestResult').value = user.testResult || '';
-        document.getElementById('editHasCert').value = user.hasCert ? '1' : '0';
-
-        const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
-        modal.show();
-    };
-
-    // Save user (UI only - would call API in real implementation)
-    window.saveUser = function() {
-        const userId = document.getElementById('editUserId').value;
-
-        // In real implementation, this would call an API
-        SwalHelper.success('Success', 'User details have been updated successfully.');
-
-        const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
-        modal.hide();
-    };
+    import initAdminUsers from '/assets/js/admin/users.js';
 
     document.addEventListener('DOMContentLoaded', () => {
-        // Event delegation for edit buttons
-        document.getElementById('main-table').addEventListener('click', function(e) {
-            const editBtn = e.target.closest('[data-user-id]');
-            if (editBtn) {
-                const userId = editBtn.dataset.userId;
-                openEditModal(userId);
-            }
-        });
-
-        initializeListPage({
-            apiEndpoint: '/admin/api/users',
-            renderRow: renderUserRow,
-            columnCount: 10,
-            onDataLoaded: (data) => {
-                allUsersData = data; // Store for edit functionality
-            }
+        initAdminUsers({
+            csrfToken: '<?= csrf_token() ?>',
+            csrfHash: '<?= csrf_hash() ?>'
         });
     });
 </script>

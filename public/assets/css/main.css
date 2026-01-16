@@ -725,7 +725,7 @@ a:hover {
 
 .badge-warning {
     background: rgba(255, 193, 7, 0.15);
-    color: #856404;
+    color: var(--gray-700);
 }
 
 .badge-danger {
@@ -745,7 +745,7 @@ a:hover {
 
 .badge-secondary {
     background: rgba(108, 117, 125, 0.15);
-    color: #6c757d;
+    color: var(--gray-600);
 }
 
 /* Status Indicators */
@@ -1467,6 +1467,7 @@ body.sidebar-open .sidebar-overlay {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }

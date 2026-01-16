@@ -25,13 +25,16 @@
 
             <form id="identityUploadForm" data-no-protect="true">
                 <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>" id="csrfToken">
-
+                <?php helper('validation'); ?>
                 <div class="form-group">
                     <label class="form-label">Aadhar Number <span class="required">*</span></label>
                     <input type="text" name="aadhar_number" id="aadharNumber" class="form-control"
                         placeholder="Enter 12-digit Aadhar number"
-                        pattern="[0-9]{12}"
+                        pattern="<?= get_aadhaar_pattern_html() ?>"
+                        minlength="12"
                         maxlength="12"
+                        title="<?= get_validation_message('aadhaar') ?>"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                         required>
                     <div class="form-text">Enter your 12-digit Aadhar number without spaces or dashes</div>
                 </div>

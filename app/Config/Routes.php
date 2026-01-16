@@ -100,7 +100,15 @@ $routes->group('admin', ['filter' => ['session', 'group:admin']], static functio
     $routes->get('api/identity-reviews/(:num)', 'AdminController::getIdentityReviewDetail/$1');
     $routes->post('api/identity-reviews/(:num)/approve', 'AdminController::approveIdentity/$1');
     $routes->post('api/identity-reviews/(:num)/reject', 'AdminController::rejectIdentity/$1');
+
+    // User Management APIs
     $routes->get('api/users', 'AdminController::getUsers');
+    $routes->get('api/users/(:num)', 'AdminController::getUser/$1');
+    $routes->post('api/users/(:num)', 'AdminController::updateUser/$1');
+    $routes->post('api/users/(:num)/ban', 'AdminController::banUser/$1');
+    $routes->post('api/users/(:num)/activate', 'AdminController::activateUser/$1');
+    $routes->post('api/users/(:num)/set-password', 'AdminController::setUserPassword/$1');
+
     $routes->get('api/videos', 'AdminController::getVideos');
     $routes->get('api/questions', 'AdminController::getQuestions');
     $routes->get('api/instructions', 'AdminController::getInstructions');

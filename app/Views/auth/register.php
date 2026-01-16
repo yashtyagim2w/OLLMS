@@ -22,34 +22,50 @@
 
         <form action="<?= url_to('register') ?>" method="post" id="registerForm">
             <?= csrf_field() ?>
-
+            <?php helper('validation'); ?>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
                     <input type="text" name="first_name" id="first_name" class="form-control"
-                        placeholder="Enter first name" value="<?= old('first_name') ?>" required>
+                        placeholder="Enter first name" value="<?= old('first_name') ?>"
+                        minlength="2" maxlength="100"
+                        pattern="<?= get_name_pattern_html() ?>"
+                        title="<?= get_validation_message('name') ?>"
+                        oninput="this.value = this.value.replace(/[^A-Za-z\s\-']/g, '')"
+                        required>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
                     <input type="text" name="last_name" id="last_name" class="form-control"
-                        placeholder="Enter last name" value="<?= old('last_name') ?>" required>
+                        placeholder="Enter last name" value="<?= old('last_name') ?>"
+                        minlength="2" maxlength="100"
+                        pattern="<?= get_name_pattern_html() ?>"
+                        title="<?= get_validation_message('name') ?>"
+                        oninput="this.value = this.value.replace(/[^A-Za-z\s\-']/g, '')"
+                        required>
                 </div>
             </div>
 
             <div class="mb-3">
                 <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
                 <input type="email" name="email" id="email" class="form-control"
-                    placeholder="Enter email address" value="<?= old('email') ?>" required>
+                    placeholder="Enter email address" value="<?= old('email') ?>"
+                    pattern="<?= get_email_pattern_html() ?>"
+                    title="<?= get_validation_message('email') ?>"
+                    required>
             </div>
 
             <div class="mb-3">
                 <label for="dob" class="form-label">Date of Birth <span class="text-danger">*</span></label>
                 <div class="input-group">
                     <input type="text" name="dob" id="dob" class="form-control"
-                        placeholder="DD/MM/YYYY" value="<?= old('dob') ?>" readonly required>
+                        placeholder="DD/MM/YYYY" value="<?= old('dob') ?>"
+                        data-min-date="<?= get_min_dob() ?>"
+                        data-max-date="<?= get_max_dob() ?>"
+                        readonly required>
                     <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
                 </div>
-                <div class="form-text">You must be at least 18 years old to apply</div>
+                <div class="form-text"><?= get_validation_message('dob') ?></div>
             </div>
 
             <div class="mb-3">
