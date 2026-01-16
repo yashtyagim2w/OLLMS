@@ -10,6 +10,11 @@ $isAdmin = $currentUser ? $currentUser->inGroup('admin') : false;
 $currentPath = uri_string();
 $verificationStatus = $verificationStatus ?? 'PENDING';
 
+// Get pending verification count (passed from layout or default to 0)
+$pendingVerificationCount = $pendingVerificationCount ?? 0;
+// Format count for display (show 100+ if > 100)
+$pendingBadge = $pendingVerificationCount > 100 ? '100+' : ($pendingVerificationCount > 0 ? $pendingVerificationCount : null);
+
 // Admin Menu Structure
 $adminMenu = [
     [
@@ -21,7 +26,7 @@ $adminMenu = [
     [
         'title' => 'Verification',
         'items' => [
-            ['path' => '/admin/identity-review', 'icon' => 'bi-person-check', 'label' => 'Identity Review', 'badge' => 5],
+            ['path' => '/admin/identity-review', 'icon' => 'bi-person-check', 'label' => 'Identity Review', 'badge' => $pendingBadge],
             ['path' => '/admin/users', 'icon' => 'bi-people', 'label' => 'User Management'],
         ]
     ],

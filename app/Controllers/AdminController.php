@@ -14,11 +14,15 @@ class AdminController extends BaseController
     public function dashboard()
     {
         $userService = service('users');
+        $documentService = service('documents');
+
         $stats = $userService->getDashboardStats();
+        $pendingList = $documentService->getRecentPendingDocuments(5);
 
         return view('admin/dashboard', array_merge([
             'pageTitle' => 'Dashboard',
             'adminName' => 'Admin',
+            'pendingList' => $pendingList,
         ], $stats));
     }
 
@@ -47,9 +51,12 @@ class AdminController extends BaseController
      */
     public function identityReview()
     {
+        $documentModel = new \App\Models\UserDocumentModel();
+        $pendingCount = $documentModel->countPending();
+
         return view('admin/identity_review', [
             'pageTitle' => 'Identity Verification',
-            'pendingCount' => 12
+            'pendingCount' => $pendingCount
         ]);
     }
 
@@ -134,64 +141,23 @@ class AdminController extends BaseController
      */
     public function getIdentityReviews()
     {
-        $page = $this->request->getGet('page') ?? 1;
-        $limit = 10;
-        $status = $this->request->getGet('status');
-        $search = $this->request->getGet('search');
+        $documentService = service('documents');
 
-        // Mock Data
-        $allData = [
-            ['id' => 1, 'first_name' => 'Rahul', 'last_name' => 'Sharma', 'email' => 'rahul@email.com', 'submitted_at' => '2026-01-12 10:30:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc1.pdf'],
-            ['id' => 2, 'first_name' => 'Priya', 'last_name' => 'Patel', 'email' => 'priya@email.com', 'submitted_at' => '2026-01-12 09:15:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc2.pdf'],
-            ['id' => 3, 'first_name' => 'Amit', 'last_name' => 'Kumar', 'email' => 'amit@email.com', 'submitted_at' => '2026-01-11 14:20:00', 'status' => 'REJECTED', 'document_url' => '/uploads/doc3.pdf'],
-            ['id' => 4, 'first_name' => 'Sneha', 'last_name' => 'Gupta', 'email' => 'sneha@email.com', 'submitted_at' => '2026-01-11 11:00:00', 'status' => 'APPROVED', 'document_url' => '/uploads/doc4.pdf'],
-            ['id' => 5, 'first_name' => 'Vikram', 'last_name' => 'Singh', 'email' => 'vikram@email.com', 'submitted_at' => '2026-01-10 16:45:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc5.pdf'],
-            ['id' => 6, 'first_name' => 'Anjali', 'last_name' => 'Roy', 'email' => 'anjali@email.com', 'submitted_at' => '2026-01-10 13:10:00', 'status' => 'APPROVED', 'document_url' => '/uploads/doc6.pdf'],
-            ['id' => 7, 'first_name' => 'Mohammed', 'last_name' => 'Ali', 'email' => 'ali@email.com', 'submitted_at' => '2026-01-09 18:00:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc7.pdf'],
-            ['id' => 8, 'first_name' => 'Kavita', 'last_name' => 'Krishnan', 'email' => 'kavita@email.com', 'submitted_at' => '2026-01-09 15:30:00', 'status' => 'APPROVED', 'document_url' => '/uploads/doc8.pdf'],
-            ['id' => 9, 'first_name' => 'Arjun', 'last_name' => 'Reddy', 'email' => 'arjun@email.com', 'submitted_at' => '2026-01-08 12:20:00', 'status' => 'REJECTED', 'document_url' => '/uploads/doc9.pdf'],
-            ['id' => 10, 'first_name' => 'Meera', 'last_name' => 'Nair', 'email' => 'meera@email.com', 'submitted_at' => '2026-01-08 10:00:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc10.pdf'],
-            ['id' => 11, 'first_name' => 'Suresh', 'last_name' => 'Babu', 'email' => 'suresh@email.com', 'submitted_at' => '2026-01-07 14:45:00', 'status' => 'APPROVED', 'document_url' => '/uploads/doc11.pdf'],
-            ['id' => 12, 'first_name' => 'Divya', 'last_name' => 'Thomas', 'email' => 'divya@email.com', 'submitted_at' => '2026-01-07 11:30:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc12.pdf'],
+        $filters = [
+            'status' => $this->request->getGet('status'),
+            'search' => $this->request->getGet('search'),
+            'sort_by' => $this->request->getGet('sort_by'),
+            'sort_order' => $this->request->getGet('sort_order'),
         ];
 
-        // Filter by status
-        if ($status) {
-            $allData = array_filter($allData, fn($item) => $item['status'] === $status);
-        }
+        $page = (int) ($this->request->getGet('page') ?? 1);
+        $limit = (int) ($this->request->getGet('limit') ?? 10);
 
-        // Filter by search
-        if ($search) {
-            $search = strtolower($search);
-            $allData = array_filter(
-                $allData,
-                fn($item) =>
-                str_contains(strtolower($item['first_name']), $search) ||
-                    str_contains(strtolower($item['last_name']), $search) ||
-                    str_contains(strtolower($item['email']), $search)
-            );
-        }
-
-        // Sort by submitted_at desc
-        usort($allData, fn($a, $b) => strtotime($b['submitted_at']) - strtotime($a['submitted_at']));
-
-        // Pagination
-        $total = count($allData);
-        $totalPages = ceil($total / $limit);
-        $offset = ($page - 1) * $limit;
-        $pagedData = array_slice($allData, $offset, $limit);
+        $result = $documentService->getDocumentsForReview($filters, $page, $limit);
 
         return $this->response->setJSON([
             'success' => true,
-            'data' => [
-                'data' => array_values($pagedData),
-                'pagination' => [
-                    'page' => (int)$page,
-                    'limit' => $limit,
-                    'totalPages' => $totalPages,
-                    'totalRecords' => $total
-                ]
-            ]
+            'data' => $result,
         ]);
     }
 
@@ -200,42 +166,57 @@ class AdminController extends BaseController
      */
     public function getIdentityReviewDetail($id)
     {
-        // Mock Data - same as list but find by ID
-        $allData = [
-            ['id' => 1, 'first_name' => 'Rahul', 'last_name' => 'Sharma', 'email' => 'rahul@email.com', 'phone' => '+91 9876543210', 'dob' => '1998-03-15', 'submitted_at' => '2026-01-12 10:30:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc1.pdf', 'document_type' => 'Aadhar Card'],
-            ['id' => 2, 'first_name' => 'Priya', 'last_name' => 'Patel', 'email' => 'priya@email.com', 'phone' => '+91 9876543211', 'dob' => '2000-07-22', 'submitted_at' => '2026-01-12 09:15:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc2.pdf', 'document_type' => 'PAN Card'],
-            ['id' => 3, 'first_name' => 'Amit', 'last_name' => 'Kumar', 'email' => 'amit@email.com', 'phone' => '+91 9876543212', 'dob' => '1999-11-08', 'submitted_at' => '2026-01-11 14:20:00', 'status' => 'REJECTED', 'document_url' => '/uploads/doc3.pdf', 'document_type' => 'Driving License'],
-            ['id' => 4, 'first_name' => 'Sneha', 'last_name' => 'Gupta', 'email' => 'sneha@email.com', 'phone' => '+91 9876543213', 'dob' => '2001-02-14', 'submitted_at' => '2026-01-11 11:00:00', 'status' => 'APPROVED', 'document_url' => '/uploads/doc4.pdf', 'document_type' => 'Aadhar Card'],
-            ['id' => 5, 'first_name' => 'Vikram', 'last_name' => 'Singh', 'email' => 'vikram@email.com', 'phone' => '+91 9876543214', 'dob' => '1997-05-10', 'submitted_at' => '2026-01-10 16:45:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc5.pdf', 'document_type' => 'Voter ID'],
-            ['id' => 6, 'first_name' => 'Anjali', 'last_name' => 'Roy', 'email' => 'anjali@email.com', 'phone' => '+91 9876543215', 'dob' => '2002-09-01', 'submitted_at' => '2026-01-10 13:10:00', 'status' => 'APPROVED', 'document_url' => '/uploads/doc6.pdf', 'document_type' => 'PAN Card'],
-            ['id' => 7, 'first_name' => 'Mohammed', 'last_name' => 'Ali', 'email' => 'ali@email.com', 'phone' => '+91 9876543216', 'dob' => '1995-12-30', 'submitted_at' => '2026-01-09 18:00:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc7.pdf', 'document_type' => 'Aadhar Card'],
-            ['id' => 8, 'first_name' => 'Kavita', 'last_name' => 'Krishnan', 'email' => 'kavita@email.com', 'phone' => '+91 9876543217', 'dob' => '1998-08-15', 'submitted_at' => '2026-01-09 15:30:00', 'status' => 'APPROVED', 'document_url' => '/uploads/doc8.pdf', 'document_type' => 'Driving License'],
-            ['id' => 9, 'first_name' => 'Arjun', 'last_name' => 'Reddy', 'email' => 'arjun@email.com', 'phone' => '+91 9876543218', 'dob' => '2000-01-26', 'submitted_at' => '2026-01-08 12:20:00', 'status' => 'REJECTED', 'document_url' => '/uploads/doc9.pdf', 'document_type' => 'PAN Card'],
-            ['id' => 10, 'first_name' => 'Meera', 'last_name' => 'Nair', 'email' => 'meera@email.com', 'phone' => '+91 9876543219', 'dob' => '1996-06-12', 'submitted_at' => '2026-01-08 10:00:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc10.pdf', 'document_type' => 'Voter ID'],
-            ['id' => 11, 'first_name' => 'Suresh', 'last_name' => 'Babu', 'email' => 'suresh@email.com', 'phone' => '+91 9876543220', 'dob' => '1990-03-03', 'submitted_at' => '2026-01-07 14:45:00', 'status' => 'APPROVED', 'document_url' => '/uploads/doc11.pdf', 'document_type' => 'Aadhar Card'],
-            ['id' => 12, 'first_name' => 'Divya', 'last_name' => 'Thomas', 'email' => 'divya@email.com', 'phone' => '+91 9876543221', 'dob' => '2001-11-20', 'submitted_at' => '2026-01-07 11:30:00', 'status' => 'PENDING', 'document_url' => '/uploads/doc12.pdf', 'document_type' => 'PAN Card'],
-        ];
+        $documentService = service('documents');
+        $document = $documentService->getDocumentDetail((int) $id);
 
-        $user = null;
-        foreach ($allData as $item) {
-            if ($item['id'] == $id) {
-                $user = $item;
-                break;
-            }
-        }
-
-        if (!$user) {
+        if (!$document) {
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'User not found'
+                'message' => 'Document not found'
             ]);
         }
 
         return $this->response->setJSON([
             'success' => true,
-            'data' => $user
+            'data' => $document
         ]);
     }
+
+    /**
+     * Approve Identity Document API
+     */
+    public function approveIdentity($id)
+    {
+        $documentService = service('documents');
+        $adminId = auth()->user()->id;
+        $remarks = $this->request->getPost('remarks');
+
+        $result = $documentService->approveDocument((int) $id, $adminId, $remarks);
+
+        return $this->response->setJSON($result);
+    }
+
+    /**
+     * Reject Identity Document API
+     */
+    public function rejectIdentity($id)
+    {
+        $documentService = service('documents');
+        $adminId = auth()->user()->id;
+        $remarks = $this->request->getPost('remarks');
+
+        if (empty($remarks)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Rejection reason is required'
+            ]);
+        }
+
+        $result = $documentService->rejectDocument((int) $id, $adminId, $remarks);
+
+        return $this->response->setJSON($result);
+    }
+
 
     /**
      * Get Users API

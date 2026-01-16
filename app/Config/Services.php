@@ -44,4 +44,17 @@ class Services extends BaseService
 
         return new \App\Services\UserService();
     }
+
+    /**
+     * Document Verification Service
+     * Usage: service('documents')->approveDocument($id, $adminId, $remarks)
+     */
+    public static function documents(bool $getShared = true): \App\Services\DocumentService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('documents');
+        }
+
+        return new \App\Services\DocumentService();
+    }
 }

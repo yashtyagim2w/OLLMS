@@ -32,9 +32,20 @@
     <link href="/assets/css/admin.css" rel="stylesheet">
 </head>
 
+<?php
+// Get pending verification count for sidebar badge
+$pendingCount = 0;
+try {
+    $documentModel = new \App\Models\UserDocumentModel();
+    $pendingCount = $documentModel->countPending();
+} catch (\Exception $e) {
+    $pendingCount = 0;
+}
+?>
+
 <body>
     <div class="main-wrapper">
-        <?= view('components/sidebar') ?>
+        <?= view('components/sidebar', ['pendingVerificationCount' => $pendingCount]) ?>
 
         <div class="content-wrapper">
             <?= view('components/header', ['pageTitle' => $pageTitle ?? 'Admin Panel']) ?>
