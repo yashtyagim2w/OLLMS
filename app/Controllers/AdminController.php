@@ -246,6 +246,93 @@ class AdminController extends BaseController
     }
 
     /**
+     * Export Users to CSV
+     */
+    public function exportUsers()
+    {
+        $userService = service('users');
+
+        $filters = [
+            'search' => $this->request->getGet('search'),
+            'status' => $this->request->getGet('status'),
+            'test_status' => $this->request->getGet('test_status'),
+            'active_status' => $this->request->getGet('active_status'),
+            'sort_by' => $this->request->getGet('sort_by'),
+            'sort_order' => $this->request->getGet('sort_order'),
+        ];
+
+        // Get all data without pagination for export
+        $result = $userService->getUsers($filters, 1, 999999);
+        $users = $result['data'] ?? [];
+
+        // Prepare CSV data
+        $csvData = [];
+
+        // Add header row
+        $csvData[] = [
+            'ID',
+            'First Name',
+            'Last Name',
+            'Email',
+            'Date of Birth',
+            'Aadhaar Number',
+            'Active Status',
+            'Email Verified',
+            'Document Status',
+            'Video Progress (%)',
+            'Test Result',
+            'Test Score',
+            'Certificate Number'
+        ];
+
+        // Add data rows
+        foreach ($users as $user) {
+            $csvData[] = [
+                $user['id'] ?? '',
+                $user['first_name'] ?? '',
+                $user['last_name'] ?? '',
+                $user['email'] ?? '',
+                $user['dob'] ?? '',
+                $user['aadhar_number'] ?? '',
+                $user['active'] ? 'Active' : 'Inactive',
+                $user['verificationStatus'] === 'COMPLETED' ? 'Yes' : 'No',
+                $user['docStatus'] ?? 'NOT_UPLOADED',
+                $user['videoProgress'] ?? 0,
+                $user['testResult'] ?? '-',
+                $user['testScore'] ?? '-',
+                $user['certificateNumber'] ?? '-'
+            ];
+        }
+
+        // Generate filename with current date
+        $filename = 'users_export_' . date('Y-m-d_His') . '.csv';
+
+        // Set headers for CSV download
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($this->arrayToCsv($csvData));
+    }
+
+    /**
+     * Convert array to CSV string
+     */
+    private function arrayToCsv(array $data): string
+    {
+        $output = fopen('php://temp', 'r+');
+
+        foreach ($data as $row) {
+            fputcsv($output, $row);
+        }
+
+        rewind($output);
+        $csv = stream_get_contents($output);
+        fclose($output);
+
+        return $csv;
+    }
+
+    /**
      * Get Single User API
      */
     public function getUser($id)

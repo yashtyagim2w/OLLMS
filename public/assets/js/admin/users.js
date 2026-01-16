@@ -328,5 +328,37 @@ export default function initAdminUsers(options = {}) {
     // Expose refresh function globally for use in saveUser
     window.refreshListData = listPage.fetchData;
 
+    // Export CSV button handler
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function () {
+            // Get current filter values
+            const filtersForm = document.getElementById('filtersForm');
+            const params = new URLSearchParams();
+
+            if (filtersForm) {
+                const formData = new FormData(filtersForm);
+                formData.forEach((value, key) => {
+                    if (value) params.set(key, value);
+                });
+            }
+
+            // Show loading state
+            const originalHTML = exportBtn.innerHTML;
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Exporting...';
+
+            // Trigger download
+            const exportUrl = `/admin/api/users/export?${params.toString()}`;
+            window.location.href = exportUrl;
+
+            // Reset button after a short delay (download starts immediately)
+            setTimeout(() => {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = originalHTML;
+            }, 1500);
+        });
+    }
+
     return listPage;
 }

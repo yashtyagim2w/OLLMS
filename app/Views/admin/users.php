@@ -69,6 +69,9 @@
             </select>
 
             <button type="button" class="btn btn-danger" id="resetBtn">Reset</button>
+            <button type="button" class="btn btn-success" id="exportBtn">
+                <i class="bi bi-download"></i> Export CSV
+            </button>
         </div>
     </form>
 </div>

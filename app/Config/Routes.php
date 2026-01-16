@@ -102,6 +102,7 @@ $routes->group('admin', ['filter' => ['session', 'group:admin']], static functio
     $routes->post('api/identity-reviews/(:num)/reject', 'AdminController::rejectIdentity/$1');
 
     // User Management APIs
+    $routes->get('api/users/export', 'AdminController::exportUsers');
     $routes->get('api/users', 'AdminController::getUsers');
     $routes->get('api/users/(:num)', 'AdminController::getUser/$1');
     $routes->post('api/users/(:num)', 'AdminController::updateUser/$1');
