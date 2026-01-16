@@ -12,8 +12,17 @@
     Unfortunately, your identity document (Aadhaar) has been <strong>rejected</strong> by our verification team.
 </p>
 
-<div style="background: <?= $theme['bg_danger'] ?>; border-left: 4px solid <?= $theme['danger'] ?>; padding: 16px; margin: 24px 0;">
-    <p style="margin: 0; color: <?= $theme['text_danger'] ?>;">
+<?php if (!empty($remarks)): ?>
+    <div style="background: <?= $theme['bg_danger'] ?>; border-left: 4px solid <?= $theme['danger'] ?>; padding: 16px; margin: 24px 0;">
+        <p style="margin: 0; color: <?= $theme['text_danger'] ?>;">
+            <strong>Reason for Rejection:</strong><br>
+            <?= esc($remarks) ?>
+        </p>
+    </div>
+<?php endif; ?>
+
+<div style="background: <?= $theme['bg_warning'] ?? '#fff9e6' ?>; border-left: 4px solid <?= $theme['warning'] ?? '#f0ad4e' ?>; padding: 16px; margin: 24px 0;">
+    <p style="margin: 0; color: <?= $theme['text_secondary'] ?>;">
         <strong>What should you do?</strong><br>
         Please log in to your account and upload a clear, valid Aadhaar document for verification.
     </p>

@@ -28,26 +28,39 @@ $stats = [
             </div>
             <div class="card-body p-0">
                 <?php
-                $pendingList = $pendingList ?? [
-                    ['name' => 'Rahul Sharma', 'email' => 'rahul@email.com', 'submitted' => '2 hours ago'],
-                    ['name' => 'Priya Patel', 'email' => 'priya@email.com', 'submitted' => '4 hours ago'],
-                    ['name' => 'Amit Kumar', 'email' => 'amit@email.com', 'submitted' => '1 day ago'],
-                ];
+                // Helper function to get time ago
+                function getTimeAgoString($dateString)
+                {
+                    if (empty($dateString)) return '';
+                    $date = new DateTime($dateString);
+                    $now = new DateTime();
+                    $diff = $now->diff($date);
+
+                    if ($diff->y > 0) return $diff->y . "y ago";
+                    if ($diff->m > 0) return $diff->m . "mo ago";
+                    if ($diff->d > 0) return $diff->d . "d ago";
+                    if ($diff->h > 0) return $diff->h . "h ago";
+                    if ($diff->i > 0) return $diff->i . "m ago";
+                    return "Just now";
+                }
+
+                // Use real data if available, otherwise show empty
+                $pendingList = $pendingList ?? [];
 
                 $headers = ['User', 'Submitted', 'Status', 'Action'];
                 $rows = [];
                 foreach ($pendingList as $item) {
                     $rows[] = [
                         '<div class="d-flex align-items-center gap-2">
-                            <div class="profile-avatar" style="width: 32px; height: 32px; font-size: 12px;">' . strtoupper(substr($item['name'], 0, 1)) . '</div>
+                            <div class="profile-avatar" style="width: 32px; height: 32px; font-size: 12px;">' . strtoupper(substr($item['name'] ?? '', 0, 1)) . '</div>
                             <div>
-                                <p class="mb-0 fw-bold">' . esc($item['name']) . '</p>
-                                <small class="text-muted">' . esc($item['email']) . '</small>
+                                <p class="mb-0 fw-bold">' . esc($item['name'] ?? '') . '</p>
+                                <small class="text-muted">' . esc($item['email'] ?? '') . '</small>
                             </div>
                         </div>',
-                        $item['submitted'],
+                        getTimeAgoString($item['submitted_at'] ?? ''),
                         '<span class="badge badge-warning">Pending</span>',
-                        '<a href="/admin/identity-review?user=1" class="btn btn-sm btn-primary">Review</a>'
+                        '<a href="/admin/identity-review?user=' . ($item['id'] ?? '') . '" class="btn btn-sm btn-primary">Review</a>'
                     ];
                 }
                 ?>

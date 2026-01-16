@@ -12,6 +12,15 @@
     Great news! Your identity document (Aadhaar) has been <strong>approved</strong> by our verification team.
 </p>
 
+<?php if (!empty($remarks)): ?>
+    <div style="background: <?= $theme['bg_light'] ?>; border-left: 4px solid <?= $theme['primary'] ?>; padding: 16px; margin: 24px 0;">
+        <p style="margin: 0; color: <?= $theme['text_secondary'] ?>;">
+            <strong>Admin Remarks:</strong><br>
+            <?= esc($remarks) ?>
+        </p>
+    </div>
+<?php endif; ?>
+
 <div style="background: <?= $theme['bg_success'] ?>; border-left: 4px solid <?= $theme['success'] ?>; padding: 16px; margin: 24px 0;">
     <p style="margin: 0; color: <?= $theme['text_success'] ?>;">
         <strong>What's next?</strong><br>

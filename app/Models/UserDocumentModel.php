@@ -226,4 +226,131 @@ class UserDocumentModel extends Model
             'reviewed_at' => date('Y-m-d H:i:s'),
         ]);
     }
+
+    /**
+     * Get paginated documents with user details for admin review
+     * 
+     * @param array $filters ['status' => string, 'search' => string, 'sort_by' => string, 'sort_order' => string]
+     * @param int $page Current page number
+     * @param int $limit Items per page
+     * @return array ['data' => array, 'total' => int, 'page' => int, 'limit' => int]
+     */
+    public function getDocumentsWithUserDetails(array $filters = [], int $page = 1, int $limit = 10): array
+    {
+        $db = db_connect();
+        $builder = $db->table('user_documents d');
+
+        $builder->select('
+            d.id,
+            d.user_id,
+            d.aadhar_number,
+            d.document_url,
+            d.status,
+            d.remarks,
+            d.reviewed_by,
+            d.reviewed_at,
+            d.created_at as submitted_at,
+            p.first_name,
+            p.last_name,
+            auth.secret as email
+        ');
+
+        $builder->join('user_profiles p', 'p.user_id = d.user_id', 'left');
+        $builder->join('auth_identities auth', 'auth.user_id = d.user_id AND auth.type = "email_password"', 'left');
+
+        // Filter by status
+        if (!empty($filters['status'])) {
+            $builder->where('d.status', $filters['status']);
+        }
+
+        // Search by name or email
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $builder->groupStart()
+                ->like('p.first_name', $search)
+                ->orLike('p.last_name', $search)
+                ->orLike('auth.secret', $search)
+                ->orLike('d.aadhar_number', $search)
+                ->groupEnd();
+        }
+
+        // Get total count before pagination
+        $total = $builder->countAllResults(false);
+
+        // Sorting
+        $sortBy = $filters['sort_by'] ?? 'submitted_at';
+        $sortOrder = $filters['sort_order'] ?? 'DESC';
+
+        $validSortFields = ['submitted_at', 'name', 'status'];
+        if (!in_array($sortBy, $validSortFields)) {
+            $sortBy = 'submitted_at';
+        }
+
+        if ($sortBy === 'name') {
+            $builder->orderBy('p.first_name', $sortOrder);
+        } else if ($sortBy === 'submitted_at') {
+            $builder->orderBy('d.created_at', $sortOrder);
+        } else {
+            $builder->orderBy('d.' . $sortBy, $sortOrder);
+        }
+
+        // Pagination
+        $offset = ($page - 1) * $limit;
+        $builder->limit($limit, $offset);
+
+        $data = $builder->get()->getResultArray();
+
+        return [
+            'data' => $data,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+        ];
+    }
+
+    /**
+     * Get single document with user details for admin review
+     * 
+     * @param int $documentId Document ID
+     * @return array|null Document data with user details or null if not found
+     */
+    public function getDocumentWithUserDetails(int $documentId): ?array
+    {
+        $db = db_connect();
+        return $db->table('user_documents d')
+            ->select('
+                d.id,
+                d.user_id,
+                d.aadhar_number,
+                d.document_url,
+                d.status,
+                d.remarks,
+                d.reviewed_by,
+                d.reviewed_at,
+                d.created_at as submitted_at,
+                p.first_name,
+                p.last_name,
+                p.dob,
+                auth.secret as email
+            ')
+            ->join('user_profiles p', 'p.user_id = d.user_id', 'left')
+            ->join('auth_identities auth', 'auth.user_id = d.user_id AND auth.type = "email_password"', 'left')
+            ->where('d.id', $documentId)
+            ->get()
+            ->getRowArray();
+    }
+
+    /**
+     * Get document by Aadhaar number
+     * Used to check if Aadhaar is already registered
+     * 
+     * @param string $aadharNumber Aadhaar number to search
+     * @return array|null Document data or null if not found
+     */
+    public function getDocumentByAadhar(string $aadharNumber): ?array
+    {
+        return $this->where('aadhar_number', $aadharNumber)
+            ->whereIn('status', ['PENDING', 'APPROVED'])
+            ->first();
+    }
 }
