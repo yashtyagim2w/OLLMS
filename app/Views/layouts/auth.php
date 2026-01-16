@@ -42,6 +42,37 @@
     <script src="/assets/js/main.js"></script>
     <script src="/assets/js/form-helpers.js"></script>
 
+    <!-- Validation Patterns from PHP (Single Source of Truth) -->
+    <?php helper('validation'); ?>
+    <script>
+        window.ValidationPatterns = {
+            // Regex patterns
+            email: /<?= get_email_pattern_html() ?>/,
+            name: /<?= get_name_pattern_html() ?>/,
+            aadhar: /<?= get_aadhaar_pattern_html() ?>/,
+            password: /<?= get_password_pattern_js() ?>/,
+
+            // Field lengths (from database schema)
+            nameMinLength: <?= NAME_MIN_LENGTH ?>,
+            nameMaxLength: <?= NAME_MAX_LENGTH ?>,
+            emailMaxLength: <?= EMAIL_MAX_LENGTH ?>,
+            aadharLength: <?= AADHAR_LENGTH ?>,
+            passwordMinLength: <?= PASSWORD_MIN_LENGTH ?>,
+            passwordMaxLength: <?= PASSWORD_MAX_LENGTH ?>,
+            otpLength: <?= OTP_LENGTH ?>,
+            minAge: <?= MIN_AGE ?>,
+
+            // Error messages
+            messages: {
+                email: '<?= get_validation_message('email') ?>',
+                name: '<?= get_validation_message('name') ?>',
+                aadhar: '<?= get_validation_message('aadhaar') ?>',
+                password: '<?= get_validation_message('password') ?>',
+                dob: '<?= get_validation_message('dob') ?>'
+            }
+        };
+    </script>
+
     <?= $this->renderSection('scripts') ?>
 </body>
 

@@ -8,15 +8,29 @@
  */
 
 // ============================================================================
-// VALIDATION CONSTANTS
+// VALIDATION CONSTANTS (Based on Database Schema)
 // ============================================================================
 
+// Age validation
 const MIN_AGE = 18;
 const MAX_AGE = 120;
 
-// ============================================================================
-// VALIDATION PATTERNS (for use in both PHP and HTML)
-// ============================================================================
+// Name fields (VARCHAR 100 in user_profiles table)
+const NAME_MIN_LENGTH = 2;
+const NAME_MAX_LENGTH = 100;
+
+// Email (VARCHAR 255 in auth_identities table - CodeIgniter Shield)
+const EMAIL_MAX_LENGTH = 255;
+
+// Aadhaar (VARCHAR 12 in user_documents table)
+const AADHAR_LENGTH = 12;
+
+// Password
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_MAX_LENGTH = 128;
+
+// OTP
+const OTP_LENGTH = 6;
 
 /**
  * Get the email validation regex pattern
@@ -78,6 +92,26 @@ function get_aadhaar_pattern_html(): string
     return '[0-9]{12}';
 }
 
+/**
+ * Get the password validation regex pattern (at least 1 uppercase, 1 lowercase, 1 digit)
+ * 
+ * @return string The regex pattern for valid passwords
+ */
+function get_password_pattern(): string
+{
+    return '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{' . PASSWORD_MIN_LENGTH . ',' . PASSWORD_MAX_LENGTH . '}$/';
+}
+
+/**
+ * Get the password pattern for JavaScript (without delimiters)
+ * 
+ * @return string The pattern for JS validation
+ */
+function get_password_pattern_js(): string
+{
+    return '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{' . PASSWORD_MIN_LENGTH . ',' . PASSWORD_MAX_LENGTH . '}$';
+}
+
 // ============================================================================
 // VALIDATION FUNCTIONS
 // ============================================================================
@@ -119,6 +153,17 @@ function is_valid_name(string $name, int $minLength = 2, int $maxLength = 100): 
 function is_valid_aadhaar(string $aadhaar): bool
 {
     return (bool) preg_match(get_aadhaar_pattern(), $aadhaar);
+}
+
+/**
+ * Validate password format (min 8 chars, at least 1 uppercase, 1 lowercase, 1 digit)
+ * 
+ * @param string $password The password to validate
+ * @return bool True if valid, false otherwise
+ */
+function is_valid_password(string $password): bool
+{
+    return (bool) preg_match(get_password_pattern(), $password);
 }
 
 /**
@@ -226,8 +271,9 @@ function get_validation_messages(): array
         'email' => 'Please enter a valid email address (e.g., user@example.com)',
         'name'  => 'Only letters, spaces, hyphens and apostrophes allowed',
         'aadhaar' => 'Aadhaar must be exactly 12 digits',
+        'password' => 'Password must be ' . PASSWORD_MIN_LENGTH . '-' . PASSWORD_MAX_LENGTH . ' characters with uppercase, lowercase, and number',
         'age' => 'Age must be between ' . MIN_AGE . ' and ' . MAX_AGE . ' years',
-        'dob' => 'You must be between ' . MIN_AGE . ' and ' . MAX_AGE . ' years old',
+        'dob' => 'You must be at least ' . MIN_AGE . ' years old',
     ];
 }
 

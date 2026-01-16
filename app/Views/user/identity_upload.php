@@ -29,14 +29,14 @@
                 <div class="form-group">
                     <label class="form-label">Aadhar Number <span class="required">*</span></label>
                     <input type="text" name="aadhar_number" id="aadharNumber" class="form-control"
-                        placeholder="Enter 12-digit Aadhar number"
+                        placeholder="Enter <?= AADHAR_LENGTH ?>-digit Aadhar number"
                         pattern="<?= get_aadhaar_pattern_html() ?>"
-                        minlength="12"
-                        maxlength="12"
+                        minlength="<?= AADHAR_LENGTH ?>"
+                        maxlength="<?= AADHAR_LENGTH ?>"
                         title="<?= get_validation_message('aadhaar') ?>"
                         oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                         required>
-                    <div class="form-text">Enter your 12-digit Aadhar number without spaces or dashes</div>
+                    <div class="form-text">Enter your <?= AADHAR_LENGTH ?>-digit Aadhar number without spaces or dashes</div>
                 </div>
 
                 <div class="form-group">

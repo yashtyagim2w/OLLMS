@@ -20,24 +20,33 @@
             <div id="session-success" style="display:none;"><?= esc(session('message')) ?></div>
         <?php endif; ?>
 
-        <form action="<?= url_to('login') ?>" method="post">
+        <form action="<?= url_to('login') ?>" method="post" id="loginForm">
             <?= csrf_field() ?>
 
             <div class="mb-3">
                 <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                <?php helper('validation'); ?>
                 <input type="email" name="email" id="email" class="form-control"
-                    placeholder="Enter email address" value="<?= old('email') ?>" required autofocus>
+                    placeholder="Enter email address" value="<?= old('email') ?>"
+                    maxlength="<?= EMAIL_MAX_LENGTH ?>"
+                    pattern="<?= get_email_pattern_html() ?>"
+                    title="<?= get_validation_message('email') ?>"
+                    required autofocus>
+                <div id="emailError" class="invalid-feedback"></div>
             </div>
 
             <div class="mb-3">
                 <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
                 <div class="input-group">
                     <input type="password" name="password" id="password" class="form-control"
-                        placeholder="Enter password" required>
+                        placeholder="Enter password"
+                        minlength="<?= PASSWORD_MIN_LENGTH ?>" maxlength="<?= PASSWORD_MAX_LENGTH ?>"
+                        required>
                     <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password')">
                         <i class="bi bi-eye"></i>
                     </button>
                 </div>
+                <div id="passwordError" class="invalid-feedback"></div>
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -51,7 +60,7 @@
             </div>
 
             <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg">
+                <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
                     <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
                 </button>
             </div>
@@ -69,4 +78,8 @@
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script type="module" src="/assets/js/auth/login.js"></script>
 <?= $this->endSection() ?>
