@@ -34,13 +34,22 @@ class DocumentService
     {
         $result = $this->documentModel->getDocumentsWithUserDetails($filters, $page, $limit);
 
-        // Generate presigned URLs for documents
+        // Generate presigned URLs for documents and format timestamps
         $s3Service = service('s3');
         $formattedData = array_map(function ($doc) use ($s3Service) {
             // Generate presigned URL if document_url exists and is an S3 key
             if (!empty($doc['document_url'])) {
                 $doc['document_url'] = $s3Service->getPresignedUrl($doc['document_url']);
             }
+
+            // Convert timestamps to ISO 8601 UTC format for proper JavaScript parsing
+            if (!empty($doc['submitted_at'])) {
+                $doc['submitted_at'] = gmdate('Y-m-d\TH:i:s\Z', strtotime($doc['submitted_at']));
+            }
+            if (!empty($doc['reviewed_at'])) {
+                $doc['reviewed_at'] = gmdate('Y-m-d\TH:i:s\Z', strtotime($doc['reviewed_at']));
+            }
+
             return $doc;
         }, $result['data']);
 
@@ -73,6 +82,14 @@ class DocumentService
         if (!empty($document['document_url'])) {
             $s3Service = service('s3');
             $document['document_url'] = $s3Service->getPresignedUrl($document['document_url'], 15); // 15 minutes
+        }
+
+        // Convert timestamps to ISO 8601 UTC format
+        if (!empty($document['submitted_at'])) {
+            $document['submitted_at'] = gmdate('Y-m-d\TH:i:s\Z', strtotime($document['submitted_at']));
+        }
+        if (!empty($document['reviewed_at'])) {
+            $document['reviewed_at'] = gmdate('Y-m-d\TH:i:s\Z', strtotime($document['reviewed_at']));
         }
 
         return $document;

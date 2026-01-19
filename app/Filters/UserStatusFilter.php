@@ -22,12 +22,19 @@ class UserStatusFilter implements FilterInterface
 {
     /**
      * Routes that are always accessible (no status checks)
+     * Pending email verification users can ONLY access verify-otp and logout
+     * Once email is verified, they can access identity-upload and verification-status
      */
     protected array $bypassRoutes = [
         'verify-otp',
         'resend-otp',
+        'api/send-otp',
+        'api/verify-otp',
+        'api/resend-otp',
         'identity-upload',
         'verification-status',
+        'api/get-upload-url',
+        'api/confirm-upload',
         'logout',
     ];
 
@@ -67,10 +74,20 @@ class UserStatusFilter implements FilterInterface
                 ->with('error', 'Please complete your registration.');
         }
 
-        // If verification_status is PENDING, show OTP page
+        // If verification_status is PENDING, show OTP page ONLY
+        // User cannot access any other page until email is verified
         if ($profile['verification_status'] === 'PENDING') {
             return redirect()->to('/verify-otp')
                 ->with('message', 'Please verify your email to continue.');
+        }
+
+        // Email is verified (COMPLETED) - now allow dashboard and profile access
+        // for users in any document status (no document, pending, rejected, approved)
+        $allowedRoutesAfterEmailVerification = ['dashboard', 'profile'];
+        foreach ($allowedRoutesAfterEmailVerification as $route) {
+            if (str_starts_with($currentPath, $route)) {
+                return; // Allow access
+            }
         }
 
         // Step 2: Check if document is uploaded

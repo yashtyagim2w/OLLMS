@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/main') ?>
-<?php $this->setData(['showSidebar' => false, 'pageTitle' => 'Upload Identity']) ?>
+<?php $this->setData(['showSidebar' => true, 'pageTitle' => 'Upload Identity']) ?>
 
 <?= $this->section('content') ?>
 <div class="container" style="max-width: 700px;">

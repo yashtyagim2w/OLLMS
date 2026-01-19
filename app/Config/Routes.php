@@ -66,7 +66,6 @@ $routes->group('', ['filter' => ['session', 'group:user', 'userstatus']], static
 
     // Profile
     $routes->get('profile', 'UserController::profile');
-    $routes->post('profile', 'UserController::updateProfile');
 
     // Videos
     $routes->get('videos', 'UserController::videos');

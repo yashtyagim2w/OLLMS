@@ -30,12 +30,22 @@
 <body>
     <div class="main-wrapper">
         <?php if (isset($showSidebar) && $showSidebar): ?>
-            <?= view('components/sidebar', ['verificationStatus' => $verificationStatus ?? 'PENDING']) ?>
+            <?= view('components/sidebar', [
+                'profileVerificationStatus' => $profileVerificationStatus ?? 'PENDING',
+                'documentStatus' => $documentStatus ?? 'NOT_UPLOADED'
+            ]) ?>
             <div class="sidebar-overlay"></div>
         <?php endif; ?>
 
         <div class="content-wrapper <?= !isset($showSidebar) || !$showSidebar ? 'full-width' : '' ?>">
-            <?= view('components/header', ['pageTitle' => $pageTitle ?? 'OLLMS', 'showSidebar' => $showSidebar ?? false]) ?>
+            <?= view('components/header', [
+                'pageTitle' => $pageTitle ?? 'OLLMS',
+                'showSidebar' => $showSidebar ?? false,
+                'isPendingVerification' => $isPendingVerification ?? false,
+                'isFullyVerified' => $isFullyVerified ?? false,
+                'displayName' => $displayName ?? 'User',
+                'displayInitial' => $displayInitial ?? 'U'
+            ]) ?>
 
             <main class="main-content">
                 <?= $this->renderSection('content') ?>

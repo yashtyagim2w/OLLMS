@@ -8,7 +8,15 @@
 $currentUser = auth()->user();
 $isAdmin = $currentUser ? $currentUser->inGroup('admin') : false;
 $currentPath = uri_string();
-$verificationStatus = $verificationStatus ?? 'PENDING';
+
+// Get both verification statuses (passed from layout)
+$profileVerificationStatus = $profileVerificationStatus ?? 'PENDING';  // email verification
+$documentStatus = $documentStatus ?? 'NOT_UPLOADED';  // document approval status (NOT_UPLOADED, PENDING, REJECTED, APPROVED)
+
+// User can access full features only if BOTH conditions are met:
+// 1. Profile verification is COMPLETED (email verified)
+// 2. Document status is APPROVED (admin approved identity)
+$isFullyVerified = ($profileVerificationStatus === 'COMPLETED' && $documentStatus === 'APPROVED');
 
 // Get pending verification count (passed from layout or default to 0)
 $pendingVerificationCount = $pendingVerificationCount ?? 0;
@@ -48,17 +56,19 @@ $adminMenu = [
 ];
 
 // User Menu Structure (conditional based on verification)
+// Dashboard is ALWAYS visible to all users
 $userMenu = [
     [
         'title' => 'Main',
         'items' => [
             ['path' => '/dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
         ]
-    ]
+    ],
 ];
 
-// Add more menu items only if documents are approved
-if ($verificationStatus === 'APPROVED') {
+// Add more menu items only if user is fully verified
+// (both email verified AND documents approved by admin)
+if ($isFullyVerified) {
     $userMenu[] = [
         'title' => 'Learning',
         'items' => [

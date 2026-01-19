@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/main') ?>
-<?php $this->setData(['showSidebar' => true, 'pageTitle' => 'Dashboard', 'verificationStatus' => $verificationStatus ?? 'PENDING']) ?>
+<?php $this->setData(['showSidebar' => true, 'pageTitle' => 'Dashboard', 'profileVerificationStatus' => $profileVerificationStatus ?? 'PENDING', 'documentStatus' => $documentStatus ?? 'PENDING']) ?>
 
 <?= $this->section('content') ?>
 <div class="page-header">
@@ -11,7 +11,7 @@
 </div>
 
 <?php
-$verificationStatus = $verificationStatus ?? 'PENDING';
+// Document status can be: NOT_UPLOADED (no document record), PENDING, REJECTED, APPROVED
 $documentStatus = $documentStatus ?? 'NOT_UPLOADED';
 
 // Application steps data
@@ -33,8 +33,8 @@ $uploadTips = [
 ];
 ?>
 
-<?php if ($verificationStatus === 'PENDING'): ?>
-    <!-- Not yet verified - Show verification required notice -->
+<?php if ($documentStatus === 'NOT_UPLOADED'): ?>
+    <!-- No document uploaded yet - Show upload prompt -->
     <div class="alert alert-warning">
         <i class="bi bi-exclamation-triangle"></i>
         <div>

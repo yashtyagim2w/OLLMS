@@ -63,16 +63,29 @@ class UserController extends BaseController
         $totalVideos = 10;
         $progressPercent = $totalVideos > 0 ? round(($videosCompleted / $totalVideos) * 100) : 0;
 
+        // Calculate display name and initial for header
+        $displayName = ($profile['first_name'] ?? '') . ' ' . ($profile['last_name'] ?? '');
+        $displayName = trim($displayName) ?: $user->email ?? 'User';
+        $displayInitial = strtoupper(substr($profile['first_name'] ?? $user->email ?? 'U', 0, 1));
+
+        // Check if user is fully verified (email + documents approved)
+        $isFullyVerified = ($profile['verification_status'] ?? 'PENDING') === 'COMPLETED'
+            && ($document['status'] ?? 'NOT_UPLOADED') === 'APPROVED';
+
         return view('user/dashboard', [
-            'pageTitle'          => 'Dashboard',
-            'userName'           => $profile ? $profile['first_name'] : 'User',
-            'verificationStatus' => $document['status'] ?? 'NOT_UPLOADED',
-            'documentStatus'     => $document['status'] ?? 'NOT_UPLOADED',
-            'videosCompleted'    => $videosCompleted,
-            'totalVideos'        => $totalVideos,
-            'progressPercent'    => $progressPercent,
-            'testAttempts'       => 0,
-            'testResult'         => 'NONE',
+            'pageTitle'                 => 'Dashboard',
+            'userName'                  => $profile ? $profile['first_name'] : 'User',
+            'profileVerificationStatus' => $profile['verification_status'] ?? 'PENDING',
+            'documentStatus'            => $document['status'] ?? 'NOT_UPLOADED',
+            'isPendingVerification'     => ($profile['verification_status'] ?? 'PENDING') === 'PENDING',
+            'isFullyVerified'           => $isFullyVerified,
+            'displayName'               => $displayName,
+            'displayInitial'            => $displayInitial,
+            'videosCompleted'           => $videosCompleted,
+            'totalVideos'               => $totalVideos,
+            'progressPercent'           => $progressPercent,
+            'testAttempts'              => 0,
+            'testResult'                => 'NONE',
         ]);
     }
 
@@ -85,16 +98,34 @@ class UserController extends BaseController
         $profile = $this->getProfile();
         $document = $this->getDocument();
 
+        // Calculate display name and initial for header
+        $displayName = ($profile['first_name'] ?? '') . ' ' . ($profile['last_name'] ?? '');
+        $displayName = trim($displayName) ?: $user->email ?? 'User';
+        $displayInitial = strtoupper(substr($profile['first_name'] ?? $user->email ?? 'U', 0, 1));
+
+        // Check if user is fully verified (email + documents approved)
+        $isFullyVerified = ($profile['verification_status'] ?? 'PENDING') === 'COMPLETED'
+            && ($document['status'] ?? 'NOT_UPLOADED') === 'APPROVED';
+
+        // Format DOB as dd/mm/yyyy
+        $dob = $profile['dob'] ?? '';
+        $dobFormatted = $dob ? date('d/m/Y', strtotime($dob)) : '';
+
         return view('user/profile', [
-            'pageTitle'          => 'My Profile',
-            'firstName'          => $profile['first_name'] ?? '',
-            'lastName'           => $profile['last_name'] ?? '',
-            'email'              => $user->email,
-            'dob'                => $profile['dob'] ?? '',
-            'aadharMasked'       => $this->documentModel->getMaskedAadhaar($user->id),
-            'verificationStatus' => $profile['verification_status'] ?? 'PENDING',
-            'documentStatus'     => $document['status'] ?? 'NOT_UPLOADED',
-            'createdAt'          => $user->created_at?->format('Y-m-d') ?? '',
+            'pageTitle'                 => 'My Profile',
+            'firstName'                 => $profile['first_name'] ?? '',
+            'lastName'                  => $profile['last_name'] ?? '',
+            'email'                     => $user->email,
+            'dob'                       => $dob,
+            'dobFormatted'              => $dobFormatted,
+            'aadharMasked'              => $this->documentModel->getMaskedAadhaar($user->id),
+            'profileVerificationStatus' => $profile['verification_status'] ?? 'PENDING',
+            'documentStatus'            => $document['status'] ?? 'NOT_UPLOADED',
+            'isPendingVerification'     => ($profile['verification_status'] ?? 'PENDING') === 'PENDING',
+            'isFullyVerified'           => $isFullyVerified,
+            'displayName'               => $displayName,
+            'displayInitial'            => $displayInitial,
+            'createdAt'                 => $user->created_at?->format('Y-m-d') ?? '',
         ]);
     }
 
@@ -119,11 +150,12 @@ class UserController extends BaseController
         $remainingCooldown = max(0, $cooldown - $elapsed);
 
         return view('user/verify_otp', [
-            'pageTitle'         => 'Verify Email',
-            'email'             => $user->email ?? 'your@email.com',
-            'isVerified'        => $profile && $profile['verification_status'] === 'COMPLETED',
-            'needsOtp'          => !session('otp_sent'),
-            'remainingCooldown' => $remainingCooldown,
+            'pageTitle'             => 'Verify Email',
+            'email'                 => $user->email ?? 'your@email.com',
+            'isVerified'            => $profile && $profile['verification_status'] === 'COMPLETED',
+            'isPendingVerification' => true, // Always true on OTP page - hide dropdown, show only logout
+            'needsOtp'              => !session('otp_sent'),
+            'remainingCooldown'     => $remainingCooldown,
         ]);
     }
 
@@ -400,10 +432,25 @@ class UserController extends BaseController
             return redirect()->to('/dashboard');
         }
 
+        // Calculate display name and initial for header
+        $displayName = ($profile['first_name'] ?? '') . ' ' . ($profile['last_name'] ?? '');
+        $displayName = trim($displayName) ?: $user->email ?? 'User';
+        $displayInitial = strtoupper(substr($profile['first_name'] ?? $user->email ?? 'U', 0, 1));
+
+        // Check verification status
+        $isFullyVerified = ($profile['verification_status'] ?? 'PENDING') === 'COMPLETED'
+            && ($document['status'] ?? 'NOT_UPLOADED') === 'APPROVED';
+
         return view('user/identity_upload', [
-            'pageTitle'       => 'Upload Identity',
-            'hasRejected'     => $document && $document['status'] === 'REJECTED',
-            'rejectionReason' => $document['remarks'] ?? null,
+            'pageTitle'             => 'Upload Identity',
+            'hasRejected'           => $document && $document['status'] === 'REJECTED',
+            'rejectionReason'       => $document['remarks'] ?? null,
+            'displayName'           => $displayName,
+            'displayInitial'        => $displayInitial,
+            'isPendingVerification' => false, // Email is verified at this point
+            'isFullyVerified'       => $isFullyVerified,
+            'profileVerificationStatus' => $profile['verification_status'] ?? 'COMPLETED',
+            'documentStatus'        => $document['status'] ?? 'NOT_UPLOADED',
         ]);
     }
 
@@ -634,8 +681,14 @@ class UserController extends BaseController
      */
     public function videos()
     {
+        $user = $this->user();
+        $profile = $this->getProfile();
+        $document = $this->getDocument();
+
         return view('user/videos', [
             'pageTitle' => 'Training Videos',
+            'profileVerificationStatus' => $profile['verification_status'] ?? 'PENDING',
+            'documentStatus' => $document['status'] ?? 'NOT_UPLOADED',
             'completedVideos' => 0,
             'totalVideos' => 10,
         ]);
@@ -646,14 +699,20 @@ class UserController extends BaseController
      */
     public function videoPlayer($videoId = 1)
     {
+        $user = $this->user();
+        $profile = $this->getProfile();
+        $document = $this->getDocument();
+
         return view('user/video_player', [
             'pageTitle' => 'Video Player',
+            'profileVerificationStatus' => $profile['verification_status'] ?? 'PENDING',
+            'documentStatus' => $document['status'] ?? 'NOT_UPLOADED',
             'videoId' => $videoId,
-            'videoTitle' => 'Introduction to Traffic Signs',
-            'videoUrl' => '/assets/videos/sample.mp4',
+            'videoTitle' => 'Traffic Signs Introduction',
             'duration' => '10:30',
-            'categoryName' => 'Traffic Rules',
-            'watchedPercent' => 45
+            'videoUrl' => 'https://example.com/video.mp4',
+            'currentProgress' => 45,
+            'nextVideoId' => $videoId + 1,
         ]);
     }
 
@@ -662,12 +721,18 @@ class UserController extends BaseController
      */
     public function videoProgress()
     {
+        $user = $this->user();
+        $profile = $this->getProfile();
+        $document = $this->getDocument();
+
         return view('user/video_progress', [
             'pageTitle' => 'My Progress',
+            'profileVerificationStatus' => $profile['verification_status'] ?? 'PENDING',
+            'documentStatus' => $document['status'] ?? 'NOT_UPLOADED',
+            'totalVideos' => 10,
             'completedVideos' => 5,
-            'inProgressVideos' => 2,
-            'totalWatchTime' => '2h 15m',
-            'overallProgress' => 70
+            'lastWatched' => 'Traffic Signs Introduction',
+            'overallProgress' => 50
         ]);
     }
 
@@ -676,11 +741,17 @@ class UserController extends BaseController
      */
     public function testInstructions()
     {
+        $user = $this->user();
+        $profile = $this->getProfile();
+        $document = $this->getDocument();
+
         return view('user/test_instructions', [
             'pageTitle' => 'Test Instructions',
-            'totalQuestions' => 25,
+            'profileVerificationStatus' => $profile['verification_status'] ?? 'PENDING',
+            'documentStatus' => $document['status'] ?? 'NOT_UPLOADED',
             'testDuration' => 30,
-            'passingScore' => 60,
+            'totalQuestions' => 20,
+            'passingMarks' => 60
         ]);
     }
 
@@ -689,9 +760,16 @@ class UserController extends BaseController
      */
     public function test()
     {
+        $user = $this->user();
+        $profile = $this->getProfile();
+        $document = $this->getDocument();
+
         return view('user/test', [
             'pageTitle' => 'Online Test',
-            'totalQuestions' => 25,
+            'profileVerificationStatus' => $profile['verification_status'] ?? 'PENDING',
+            'documentStatus' => $document['status'] ?? 'NOT_UPLOADED',
+            'remainingTime' => 1800,
+            'currentQuestion' => 1
         ]);
     }
 
@@ -700,13 +778,20 @@ class UserController extends BaseController
      */
     public function testResult($testId = 1)
     {
+        $user = $this->user();
+        $profile = $this->getProfile();
+        $document = $this->getDocument();
+
         return view('user/test_result', [
             'pageTitle' => 'Test Result',
-            'score' => 0,
-            'totalQuestions' => 25,
-            'correctAnswers' => 0,
-            'testDate' => date('Y-m-d H:i:s'),
-            'timeTaken' => '00:00',
+            'profileVerificationStatus' => $profile['verification_status'] ?? 'PENDING',
+            'documentStatus' => $document['status'] ?? 'NOT_UPLOADED',
+            'testId' => $testId,
+            'score' => 85,
+            'totalQuestions' => 20,
+            'correctAnswers' => 17,
+            'result' => 'PASSED',
+            'remarks' => 'Excellent performance!'
         ]);
     }
 
@@ -715,24 +800,19 @@ class UserController extends BaseController
      */
     public function certificate()
     {
+        $user = $this->user();
         $profile = $this->getProfile();
+        $document = $this->getDocument();
 
         return view('user/certificate', [
             'pageTitle' => 'My Certificate',
+            'profileVerificationStatus' => $profile['verification_status'] ?? 'PENDING',
+            'documentStatus' => $document['status'] ?? 'NOT_UPLOADED',
             'hasCertificate' => false,
             'firstName' => $profile['first_name'] ?? '',
             'lastName' => $profile['last_name'] ?? '',
             'certificateNumber' => '',
             'issueDate' => '',
         ]);
-    }
-
-    /**
-     * Update Profile
-     */
-    public function updateProfile()
-    {
-        // TODO: Implement profile update
-        return $this->backWithSuccess('Profile updated successfully.');
     }
 }

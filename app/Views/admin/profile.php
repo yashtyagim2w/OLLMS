@@ -12,8 +12,8 @@
 </div>
 
 <?php
-$firstName = $profile['first_name'] ?? '';
-$lastName = $profile['last_name'] ?? '';
+$firstName = $profile['first_name'] ?? 'RTO';
+$lastName = $profile['last_name'] ?? 'Admin';
 $email = $user->email ?? '';
 $createdAt = $user->created_at ?? 'now';
 ?>
@@ -47,7 +47,7 @@ $createdAt = $user->created_at ?? 'now';
                     </li>
                     <li class="d-flex justify-content-between py-2">
                         <span>Member Since</span>
-                        <span><?= date('M d, Y', strtotime($createdAt)) ?></span>
+                        <span><?= date('d M, Y', strtotime($createdAt)) ?></span>
                     </li>
                 </ul>
             </div>
@@ -80,39 +80,6 @@ $createdAt = $user->created_at ?? 'now';
                         <label class="form-label">Email Address</label>
                         <input type="email" class="form-control" value="<?= esc($email) ?>" readonly>
                     </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3><i class="bi bi-key me-2"></i>Change Password</h3>
-            </div>
-            <div class="card-body">
-                <form id="changePasswordForm">
-                    <div class="form-group">
-                        <label class="form-label">Current Password</label>
-                        <input type="password" class="form-control" placeholder="Enter current password">
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">New Password</label>
-                                <input type="password" class="form-control" placeholder="Enter new password">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">Confirm New Password</label>
-                                <input type="password" class="form-control" placeholder="Confirm new password">
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check"></i> Update Password
-                    </button>
                 </form>
             </div>
         </div>
