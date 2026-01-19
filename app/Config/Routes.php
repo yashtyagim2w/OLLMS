@@ -40,77 +40,77 @@ $routes->post('reset-password', 'AuthController::resetPassword');
 // USER ROUTES - Authentication Steps (session + user group, no status check)
 $routes->group('', ['filter' => ['session', 'group:user']], static function ($routes) {
     // Email Verification
-    $routes->get('verify-otp', 'UserController::verifyOtp');
+    $routes->get('verify-otp', 'User\VerificationController::otp');
 
     // API endpoints for OTP (JSON responses)
-    $routes->post('api/send-otp', 'UserController::apiSendOtp');
-    $routes->post('api/verify-otp', 'UserController::apiVerifyOtp');
-    $routes->post('api/resend-otp', 'UserController::apiResendOtp');
+    $routes->post('api/send-otp', 'User\VerificationController::apiSend');
+    $routes->post('api/verify-otp', 'User\VerificationController::apiVerify');
+    $routes->post('api/resend-otp', 'User\VerificationController::apiResend');
 
     // Identity Upload (accessible during auth flow)
-    $routes->get('identity-upload', 'UserController::identityUpload');
-    $routes->post('identity-upload', 'UserController::processIdentityUpload');
+    $routes->get('identity-upload', 'User\DocumentController::upload');
+    $routes->post('identity-upload', 'User\DocumentController::processUpload');
 
     // API endpoints for S3 presigned upload
-    $routes->post('api/get-upload-url', 'UserController::apiGetUploadUrl');
-    $routes->post('api/confirm-upload', 'UserController::apiConfirmUpload');
+    $routes->post('api/get-upload-url', 'User\DocumentController::apiGetUploadUrl');
+    $routes->post('api/confirm-upload', 'User\DocumentController::apiConfirmUpload');
 
     // Verification Status (accessible during auth flow)
-    $routes->get('verification-status', 'UserController::verificationStatus');
+    $routes->get('verification-status', 'User\DocumentController::status');
 });
 
 // USER ROUTES - Protected (requires session + user group + approved status)
 $routes->group('', ['filter' => ['session', 'group:user', 'userstatus']], static function ($routes) {
     // Dashboard
-    $routes->get('dashboard', 'UserController::dashboard');
+    $routes->get('dashboard', 'User\DashboardController::index');
 
     // Profile
-    $routes->get('profile', 'UserController::profile');
+    $routes->get('profile', 'User\ProfileController::index');
 
     // Videos
-    $routes->get('videos', 'UserController::videos');
-    $routes->get('video/(:num)', 'UserController::videoPlayer/$1');
-    $routes->get('video-progress', 'UserController::videoProgress');
+    $routes->get('videos', 'User\LearningController::index');
+    $routes->get('video/(:num)', 'User\LearningController::player/$1');
+    $routes->get('video-progress', 'User\LearningController::progress');
 
     // Test
-    $routes->get('test-instructions', 'UserController::testInstructions');
-    $routes->get('test', 'UserController::test');
-    $routes->get('test-result/(:num)', 'UserController::testResult/$1');
-    $routes->get('test-result', 'UserController::testResult');
+    $routes->get('test-instructions', 'User\TestController::instructions');
+    $routes->get('test', 'User\TestController::index');
+    $routes->get('test-result/(:num)', 'User\TestController::result/$1');
+    $routes->get('test-result', 'User\TestController::result');
 
     // Certificate
-    $routes->get('certificate', 'UserController::certificate');
+    $routes->get('certificate', 'User\CertificateController::index');
 });
 
 // ADMIN ROUTES (session + admin group)
 $routes->group('admin', ['filter' => ['session', 'group:admin']], static function ($routes) {
-    $routes->get('dashboard', 'AdminController::dashboard');
-    $routes->get('profile', 'AdminController::profile');
-    $routes->get('identity-review', 'AdminController::identityReview');
-    $routes->get('users', 'AdminController::users');
-    $routes->get('videos', 'AdminController::videos');
-    $routes->get('questions', 'AdminController::questions');
-    $routes->get('instructions', 'AdminController::instructions');
-    $routes->get('progress', 'AdminController::progress');
-    $routes->get('reports', 'AdminController::reports');
+    $routes->get('dashboard', 'Admin\DashboardController::index');
+    $routes->get('profile', 'Admin\ProfileController::index');
+    $routes->get('identity-review', 'Admin\IdentityReviewController::index');
+    $routes->get('users', 'Admin\UserManagementController::index');
+    $routes->get('videos', 'Admin\VideoManagementController::index');
+    $routes->get('questions', 'Admin\QuestionBankController::index');
+    $routes->get('instructions', 'Admin\InstructionController::index');
+    $routes->get('progress', 'Admin\ProgressController::index');
+    $routes->get('reports', 'Admin\ReportController::index');
 
     // API Routes for List Pages
-    $routes->get('api/identity-reviews', 'AdminController::getIdentityReviews');
-    $routes->get('api/identity-reviews/(:num)', 'AdminController::getIdentityReviewDetail/$1');
-    $routes->post('api/identity-reviews/(:num)/approve', 'AdminController::approveIdentity/$1');
-    $routes->post('api/identity-reviews/(:num)/reject', 'AdminController::rejectIdentity/$1');
+    $routes->get('api/identity-reviews', 'Admin\IdentityReviewController::getList');
+    $routes->get('api/identity-reviews/(:num)', 'Admin\IdentityReviewController::getDetail/$1');
+    $routes->post('api/identity-reviews/(:num)/approve', 'Admin\IdentityReviewController::approve/$1');
+    $routes->post('api/identity-reviews/(:num)/reject', 'Admin\IdentityReviewController::reject/$1');
 
     // User Management APIs
-    $routes->get('api/users/export', 'AdminController::exportUsers');
-    $routes->get('api/users', 'AdminController::getUsers');
-    $routes->get('api/users/(:num)', 'AdminController::getUser/$1');
-    $routes->post('api/users/(:num)', 'AdminController::updateUser/$1');
-    $routes->post('api/users/(:num)/ban', 'AdminController::banUser/$1');
-    $routes->post('api/users/(:num)/activate', 'AdminController::activateUser/$1');
-    $routes->post('api/users/(:num)/set-password', 'AdminController::setUserPassword/$1');
+    $routes->get('api/users/export', 'Admin\UserManagementController::export');
+    $routes->get('api/users', 'Admin\UserManagementController::getList');
+    $routes->get('api/users/(:num)', 'Admin\UserManagementController::getDetail/$1');
+    $routes->post('api/users/(:num)', 'Admin\UserManagementController::update/$1');
+    $routes->post('api/users/(:num)/ban', 'Admin\UserManagementController::ban/$1');
+    $routes->post('api/users/(:num)/activate', 'Admin\UserManagementController::activate/$1');
+    $routes->post('api/users/(:num)/set-password', 'Admin\UserManagementController::setPassword/$1');
 
-    $routes->get('api/videos', 'AdminController::getVideos');
-    $routes->get('api/questions', 'AdminController::getQuestions');
-    $routes->get('api/instructions', 'AdminController::getInstructions');
-    $routes->get('api/progress', 'AdminController::getUserProgress');
+    $routes->get('api/videos', 'Admin\VideoManagementController::getList');
+    $routes->get('api/questions', 'Admin\QuestionBankController::getList');
+    $routes->get('api/instructions', 'Admin\InstructionController::getList');
+    $routes->get('api/progress', 'Admin\ProgressController::getUserProgress');
 });
