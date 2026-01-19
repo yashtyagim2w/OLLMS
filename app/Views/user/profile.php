@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/main') ?>
-<?php $this->setData(['showSidebar' => true, 'pageTitle' => 'My Profile', 'verificationStatus' => $verificationStatus ?? 'APPROVED']) ?>
+<?php $this->setData(['showSidebar' => true, 'pageTitle' => 'My Profile', 'profileVerificationStatus' => $profileVerificationStatus ?? 'PENDING', 'documentStatus' => $documentStatus ?? 'NOT_UPLOADED']) ?>
 
 <?= $this->section('content') ?>
 <div class="page-header">
@@ -20,8 +20,8 @@
                 </div>
                 <h4><?= esc(($firstName ?? 'User') . ' ' . ($lastName ?? '')) ?></h4>
                 <p class="text-muted"><?= esc($email ?? 'user@example.com') ?></p>
-                <span class="badge badge-<?= ($verificationStatus ?? 'PENDING') === 'APPROVED' ? 'success' : 'warning' ?>">
-                    <?= ($verificationStatus ?? 'PENDING') === 'APPROVED' ? 'Verified' : 'Pending Verification' ?>
+                <span class="badge badge-<?= ($profileVerificationStatus ?? 'PENDING') === 'COMPLETED' ? 'success' : 'warning' ?>">
+                    <?= ($profileVerificationStatus ?? 'PENDING') === 'COMPLETED' ? 'Verified' : 'Pending Verification' ?>
                 </span>
             </div>
         </div>
@@ -80,7 +80,7 @@
 
                     <div class="form-group">
                         <label class="form-label">Date of Birth</label>
-                        <input type="date" class="form-control" value="<?= esc($dob ?? '') ?>" readonly>
+                        <input type="text" class="form-control" value="<?= esc($dobFormatted ?? '') ?>" readonly>
                     </div>
 
                     <div class="form-group">
@@ -91,38 +91,6 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h3><i class="bi bi-key me-2"></i>Change Password</h3>
-            </div>
-            <div class="card-body">
-                <form id="changePasswordForm">
-                    <div class="form-group">
-                        <label class="form-label">Current Password</label>
-                        <input type="password" class="form-control" placeholder="Enter current password">
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">New Password</label>
-                                <input type="password" class="form-control" placeholder="Enter new password">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">Confirm New Password</label>
-                                <input type="password" class="form-control" placeholder="Confirm new password">
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check"></i> Update Password
-                    </button>
-                </form>
-            </div>
-        </div>
     </div>
 </div>
 <?= $this->endSection() ?>
