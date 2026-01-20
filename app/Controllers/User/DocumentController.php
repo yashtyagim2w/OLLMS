@@ -203,7 +203,10 @@ class DocumentController extends BaseUserController
     public function status()
     {
         $user = $this->user();
-        $document = $this->getDocument();
+        $profile = $this->getProfile();
+
+        // Get latest document data directly from model to ensure fresh data
+        $document = $this->documentModel->getLatestDocument($user->id);
 
         if (!$document) {
             return redirect()->to('/identity-upload');
@@ -213,12 +216,30 @@ class DocumentController extends BaseUserController
             return redirect()->to('/dashboard');
         }
 
+        // Calculate display name and initial for header
+        $displayName = ($profile['first_name'] ?? '') . ' ' . ($profile['last_name'] ?? '');
+        $displayName = trim($displayName) ?: $user->email ?? 'User';
+        $displayInitial = strtoupper(substr($profile['first_name'] ?? $user->email ?? 'U', 0, 1));
+
+        // Check verification status
+        $isFullyVerified = ($profile['verification_status'] ?? 'PENDING') === 'COMPLETED'
+            && ($document['status'] ?? 'NOT_UPLOADED') === 'APPROVED';
+
+        // Convert timestamps to ISO 8601 format for JavaScript
+        $submittedAt = !empty($document['created_at']) ? date('c', strtotime($document['created_at'])) : null;
+        $reviewedAt = !empty($document['reviewed_at']) ? date('c', strtotime($document['reviewed_at'])) : null;
+
         return view('user/verification_status', [
-            'pageTitle'      => 'Verification Status',
-            'documentStatus' => $document['status'],
-            'rejectionNote'  => $document['remarks'],
-            'submittedAt'    => $document['created_at'],
-            'reviewedAt'     => $document['reviewed_at'],
+            'pageTitle'                 => 'Verification Status',
+            'documentStatus'            => $document['status'],
+            'rejectionNote'             => $document['remarks'],
+            'submittedAt'               => $submittedAt,
+            'reviewedAt'                => $reviewedAt,
+            'displayName'               => $displayName,
+            'displayInitial'            => $displayInitial,
+            'isPendingVerification'     => false, // Email is verified at this point
+            'isFullyVerified'           => $isFullyVerified,
+            'profileVerificationStatus' => $profile['verification_status'] ?? 'COMPLETED',
         ]);
     }
 }

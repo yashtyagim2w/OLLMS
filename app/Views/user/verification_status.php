@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/main') ?>
-<?php $this->setData(['showSidebar' => true, 'pageTitle' => 'Verification Status', 'verificationStatus' => $verificationStatus ?? 'PENDING']) ?>
+<?php $this->setData(['showSidebar' => true, 'pageTitle' => 'Verification Status', 'profileVerificationStatus' => $profileVerificationStatus ?? 'COMPLETED', 'documentStatus' => $documentStatus ?? 'PENDING']) ?>
 
 <?= $this->section('content') ?>
 <div class="page-header">
@@ -73,17 +73,6 @@
                 <div class="mt-5 pt-4 border-top">
                     <h5 class="mb-4">Verification Timeline</h5>
                     <div class="timeline">
-                        <div class="d-flex mb-3">
-                            <div class="me-3">
-                                <span class="badge bg-success rounded-circle p-2">
-                                    <i class="bi bi-check"></i>
-                                </span>
-                            </div>
-                            <div>
-                                <strong>Document Submitted</strong>
-                                <p class="text-muted mb-0"><?= date('M d, Y - h:i A', strtotime($submittedAt ?? 'now')) ?></p>
-                            </div>
-                        </div>
 
                         <?php if ($documentStatus !== 'PENDING'): ?>
                             <div class="d-flex mb-3">
@@ -94,10 +83,11 @@
                                 </div>
                                 <div>
                                     <strong><?= $documentStatus === 'APPROVED' ? 'Document Approved' : 'Document Rejected' ?></strong>
-                                    <p class="text-muted mb-0"><?= date('M d, Y - h:i A', strtotime($reviewedAt ?? 'now')) ?></p>
-                                    <?php if (isset($reviewedBy)): ?>
-                                        <small class="text-muted">Reviewed by: <?= esc($reviewedBy) ?></small>
-                                    <?php endif; ?>
+                                    <p class="text-muted mb-0">
+                                        <span class="format-datetime" data-datetime="<?= esc($reviewedAt) ?>">
+                                            <?= $reviewedAt ? date('M d, Y - h:i A', strtotime($reviewedAt)) : 'N/A' ?>
+                                        </span>
+                                    </p>
                                 </div>
                             </div>
                         <?php else: ?>
@@ -113,10 +103,39 @@
                                 </div>
                             </div>
                         <?php endif; ?>
+                        <div class="d-flex mb-3">
+                            <div class="me-3">
+                                <span class="badge bg-success rounded-circle p-2">
+                                    <i class="bi bi-check"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <strong>Document Submitted</strong>
+                                <p class="text-muted mb-0">
+                                    <span class="format-datetime" data-datetime="<?= esc($submittedAt) ?>">
+                                        <?= $submittedAt ? date('M d, Y - h:i A', strtotime($submittedAt)) : 'N/A' ?>
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script src="/assets/js/time-utils.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.format-datetime').forEach(el => {
+            const datetime = el.getAttribute('data-datetime');
+            if (datetime) {
+                el.textContent = window.TimeUtils.formatDateTime(datetime);
+            }
+        });
+    });
+</script>
 <?= $this->endSection() ?>

@@ -341,6 +341,34 @@ class UserDocumentModel extends Model
     }
 
     /**
+     * Get document history for a user
+     * Returns all document submissions ordered by most recent first
+     * 
+     * @param int $userId User ID
+     * @return array List of document submissions with reviewer details
+     */
+    public function getDocumentHistory(int $userId): array
+    {
+        $db = db_connect();
+        return $db->table('user_documents d')
+            ->select('
+                d.id,
+                d.aadhar_number,
+                d.status,
+                d.remarks,
+                d.reviewed_at,
+                d.created_at as submitted_at,
+                p.first_name as reviewer_first_name,
+                p.last_name as reviewer_last_name
+            ')
+            ->join('user_profiles p', 'p.user_id = d.reviewed_by', 'left')
+            ->where('d.user_id', $userId)
+            ->orderBy('d.created_at', 'DESC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
      * Get document by Aadhaar number
      * Used to check if Aadhaar is already registered
      * 
