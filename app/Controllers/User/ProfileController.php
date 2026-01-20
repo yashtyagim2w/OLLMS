@@ -20,6 +20,21 @@ class ProfileController extends BaseUserController
         $dob = $profile['dob'] ?? '';
         $dobFormatted = $dob ? date('d/m/Y', strtotime($dob)) : '';
 
+        // Get document history only if email verified but not fully approved
+        $showDocumentHistory = ($profile['verification_status'] ?? 'PENDING') === 'COMPLETED' && !$isFullyVerified;
+        $documentHistory = $showDocumentHistory ? $this->documentModel->getDocumentHistory($user->id) : [];
+
+        // Convert timestamps to ISO 8601 UTC format for JavaScript
+        foreach ($documentHistory as &$doc) {
+            if (!empty($doc['submitted_at'])) {
+                $doc['submitted_at'] = date('c', strtotime($doc['submitted_at']));
+            }
+            if (!empty($doc['reviewed_at'])) {
+                $doc['reviewed_at'] = date('c', strtotime($doc['reviewed_at']));
+            }
+        }
+        unset($doc); // Break reference
+
         return view('user/profile', [
             'pageTitle'                 => 'My Profile',
             'firstName'                 => $profile['first_name'] ?? '',
@@ -35,6 +50,8 @@ class ProfileController extends BaseUserController
             'displayName'               => $displayName,
             'displayInitial'            => $displayInitial,
             'createdAt'                 => $user->created_at?->format('Y-m-d') ?? '',
+            'showDocumentHistory'       => $showDocumentHistory,
+            'documentHistory'           => $documentHistory,
         ]);
     }
 }

@@ -38,7 +38,7 @@
                     </li>
                     <li class="d-flex justify-content-between py-2 border-bottom">
                         <span>Documents</span>
-                        <span class="badge badge-<?= ($documentStatus ?? 'PENDING') === 'APPROVED' ? 'success' : 'warning' ?>">
+                        <span class="badge badge-<?= ($documentStatus ?? 'PENDING') === 'APPROVED' ? 'success' : (($documentStatus ?? 'PENDING') === 'REJECTED' ? 'danger' : 'warning') ?>">
                             <?= ucfirst(strtolower($documentStatus ?? 'Pending')) ?>
                         </span>
                     </li>
@@ -91,6 +91,86 @@
             </div>
         </div>
 
+        <?php if ($showDocumentHistory ?? false): ?>
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="bi bi-clock-history me-2"></i>Document Submission History</h3>
+                </div>
+                <div class="card-body">
+                    <?php if (empty($documentHistory)): ?>
+                        <p class="text-muted text-center py-4">No document submissions yet.</p>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Submitted On</th>
+                                        <th>Aadhaar (Last 4)</th>
+                                        <th>Status</th>
+                                        <th>Reviewed On</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php $i = 1;
+                                    foreach ($documentHistory as $doc): ?>
+                                        <tr>
+                                            <td><?= $i++ ?></td>
+                                            <td>
+                                                <span class="format-datetime" data-datetime="<?= esc($doc['submitted_at']) ?>">
+                                                    <?= date('d/m/Y H:i', strtotime($doc['submitted_at'])) ?>
+                                                </span>
+                                            </td>
+                                            <td>XXXX-XXXX-<?= substr($doc['aadhar_number'], -4) ?></td>
+                                            <td>
+                                                <span class="badge badge-<?= $doc['status'] === 'APPROVED' ? 'success' : ($doc['status'] === 'REJECTED' ? 'danger' : 'warning') ?>">
+                                                    <?= esc($doc['status']) ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <?php if ($doc['reviewed_at']): ?>
+                                                    <span class="format-datetime" data-datetime="<?= esc($doc['reviewed_at']) ?>">
+                                                        <?= date('d/m/Y H:i', strtotime($doc['reviewed_at'])) ?>
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($doc['remarks']): ?>
+                                                    <div class="table-cell-scrollable">
+                                                        <small><?= esc($doc['remarks']) ?></small>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script src="/assets/js/time-utils.js"></script>
+<script>
+    // Format all timestamps using TimeUtils on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.format-datetime').forEach(el => {
+            const datetime = el.getAttribute('data-datetime');
+            if (datetime) {
+                el.textContent = window.TimeUtils.formatDateTime(datetime);
+            }
+        });
+    });
+</script>
 <?= $this->endSection() ?>

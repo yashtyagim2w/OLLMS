@@ -39,11 +39,11 @@ abstract class BaseUserController extends BaseController
     }
 
     /**
-     * Get current user's document
+     * Get current user's document (latest)
      */
     protected function getDocument(): ?array
     {
         $user = $this->user();
-        return $user ? $this->documentModel->where('user_id', $user->id)->first() : null;
+        return $user ? $this->documentModel->getLatestDocument($user->id) : null;
     }
 }

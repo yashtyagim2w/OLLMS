@@ -703,6 +703,33 @@ a:hover {
     background: var(--gray-50);
 }
 
+/* Scrollable Table Cells */
+.table-cell-scrollable {
+    max-height: 100px;
+    overflow-y: auto;
+    word-wrap: break-word;
+    white-space: normal;
+    display: block;
+}
+
+.table-cell-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-cell-scrollable::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: 3px;
+}
+
+.table-cell-scrollable::-webkit-scrollbar-thumb {
+    background: var(--gray-400);
+    border-radius: 3px;
+}
+
+.table-cell-scrollable::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-500);
+}
+
 /* ============================================
    Badges & Status
    ============================================ */
