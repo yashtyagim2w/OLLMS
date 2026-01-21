@@ -8,9 +8,10 @@
 $currentUser = auth()->user();
 $isAdmin = $currentUser ? $currentUser->inGroup('admin') : false;
 
-// Display name and initial should be passed from controller
-$displayName = $displayName ?? 'User';
-$displayInitial = $displayInitial ?? 'U';
+// For admin users, show "RTO" instead of user name
+// For regular users, use the passed display name
+$displayName = $isAdmin ? 'RTO' : ($displayName ?? 'User');
+$displayInitial = $isAdmin ? 'R' : ($displayInitial ?? 'U');
 ?>
 <header class="main-header <?= !isset($showSidebar) || !$showSidebar ? 'full-width' : '' ?>">
     <div class="header-left">

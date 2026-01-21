@@ -152,19 +152,31 @@ class S3Service
      * @param string $filename Desired filename
      * @param string $contentType MIME type of file
      * @param int|null $expiryMinutes URL expiry in minutes
+     * @param int|null $maxSizeBytes Maximum file size in bytes (enforced by AWS)
      * @return array ['success' => bool, 'uploadUrl' => string, 'key' => string]
      */
-    public function getPresignedUploadUrl(string $path, string $filename, string $contentType, ?int $expiryMinutes = null): array
+    public function getPresignedUploadUrl(string $path, string $filename, string $contentType, ?int $expiryMinutes = null, ?int $maxSizeBytes = null): array
     {
         try {
             $expiry = $expiryMinutes ?? 5; // 5 minutes for upload
             $key = trim($path, '/') . '/' . $filename;
 
-            $command = $this->client->getCommand('PutObject', [
+            $commandParams = [
                 'Bucket' => $this->config->bucketName,
                 'Key' => $key,
                 'ContentType' => $contentType,
-            ]);
+            ];
+
+            // Add content-length constraint if max size is specified
+            if ($maxSizeBytes !== null) {
+                $commandParams['@http'] = [
+                    'headers' => [
+                        'x-amz-content-length-range' => "0,{$maxSizeBytes}",
+                    ],
+                ];
+            }
+
+            $command = $this->client->getCommand('PutObject', $commandParams);
 
             $presignedRequest = $this->client->createPresignedRequest(
                 $command,

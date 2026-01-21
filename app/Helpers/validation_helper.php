@@ -53,13 +53,13 @@ function get_email_pattern_html(): string
 }
 
 /**
- * Get the name validation regex pattern (alphabets, spaces, hyphens, apostrophes)
+ * Get the name validation regex pattern (alphabets only)
  * 
  * @return string The regex pattern for valid names
  */
 function get_name_pattern(): string
 {
-    return '/^[A-Za-z\s\-\']+$/';
+    return '/^[A-Za-z]+$/';
 }
 
 /**
@@ -69,7 +69,7 @@ function get_name_pattern(): string
  */
 function get_name_pattern_html(): string
 {
-    return "[A-Za-z\\s\\-']+";
+    return "[A-Za-z]+";
 }
 
 /**
@@ -128,7 +128,7 @@ function is_valid_email(string $email): bool
 }
 
 /**
- * Validate name format (alphabets, spaces, hyphens, apostrophes only)
+ * Validate name format (alphabets only)
  * 
  * @param string $name The name to validate
  * @param int $minLength Minimum length (default: 2)
@@ -235,14 +235,14 @@ function get_max_dob(): string
 // ============================================================================
 
 /**
- * Sanitize name input (remove non-alphabetic characters except spaces, hyphens, apostrophes)
+ * Sanitize name input (remove non-alphabetic characters)
  * 
  * @param string $name The name to sanitize
  * @return string The sanitized name
  */
 function sanitize_name(string $name): string
 {
-    return preg_replace("/[^A-Za-z\s\-']/", '', $name);
+    return preg_replace("/[^A-Za-z]/", '', $name);
 }
 
 /**
@@ -269,7 +269,7 @@ function get_validation_messages(): array
 {
     return [
         'email' => 'Please enter a valid email address (e.g., user@example.com)',
-        'name'  => 'Only letters, spaces, hyphens and apostrophes allowed',
+        'name'  => 'Only letters allowed',
         'aadhaar' => 'Aadhaar must be exactly 12 digits',
         'password' => 'Password must be ' . PASSWORD_MIN_LENGTH . '-' . PASSWORD_MAX_LENGTH . ' characters with uppercase, lowercase, and number',
         'age' => 'Age must be between ' . MIN_AGE . ' and ' . MAX_AGE . ' years',

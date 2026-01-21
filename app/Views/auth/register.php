@@ -31,7 +31,7 @@
                         minlength="<?= NAME_MIN_LENGTH ?>" maxlength="<?= NAME_MAX_LENGTH ?>"
                         pattern="<?= get_name_pattern_html() ?>"
                         title="<?= get_validation_message('name') ?>"
-                        oninput="this.value = this.value.replace(/[^A-Za-z\s\-']/g, '')"
+                        oninput="this.value = this.value.replace(/[^A-Za-z']/g, '')"
                         required>
                     <div id="firstNameError" class="invalid-feedback"></div>
                 </div>

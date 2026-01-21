@@ -20,6 +20,7 @@ class Aws extends BaseConfig
     // S3 path prefixes for different file types
     public string $documentsPrefix = 'documents';
     public string $videosPrefix = 'videos';
+    public string $thumbnailsPrefix = 'thumbnails';
     public string $certificatesPrefix = 'certificates';
 
     public function __construct()

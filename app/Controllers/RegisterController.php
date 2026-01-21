@@ -38,9 +38,9 @@ class RegisterController extends ShieldRegisterController
                 ->withInput();
         }
 
-        if (!preg_match('/^[a-zA-Z\s\'-]+$/', $firstName)) {
+        if (!preg_match('/^[a-zA-Z]+$/', $firstName)) {
             return redirect()->back()
-                ->with('error', 'First name can only contain letters, spaces, hyphens, and apostrophes.')
+                ->with('error', 'First name can only contain letters.')
                 ->withInput();
         }
 
@@ -51,9 +51,9 @@ class RegisterController extends ShieldRegisterController
                 ->withInput();
         }
 
-        if (!preg_match('/^[a-zA-Z\s\'-]+$/', $lastName)) {
+        if (!preg_match('/^[a-zA-Z]+$/', $lastName)) {
             return redirect()->back()
-                ->with('error', 'Last name can only contain letters, spaces, hyphens, and apostrophes.')
+                ->with('error', 'Last name can only contain letters.')
                 ->withInput();
         }
 

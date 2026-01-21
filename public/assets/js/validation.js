@@ -30,17 +30,17 @@ export const validationRules = {
         required: true,
         minLength: patterns.nameMinLength || 2,
         maxLength: patterns.nameMaxLength || 100,
-        pattern: patterns.name || /^[A-Za-z\s\-']+$/,
-        message: messages.name || 'First name must be 2-100 characters, letters only.',
-        sanitize: (v) => v.replace(/[^A-Za-z\s\-']/g, '')
+        pattern: patterns.name || /^[A-Za-z']+$/,
+        message: messages.name || 'First name must be 2-100 characters only.',
+        sanitize: (v) => v.replace(/[^A-Za-z']/g, '')
     },
     lastName: {
         required: true,
         minLength: patterns.nameMinLength || 2,
         maxLength: patterns.nameMaxLength || 100,
-        pattern: patterns.name || /^[A-Za-z\s\-']+$/,
-        message: messages.name || 'Last name must be 2-100 characters, letters only.',
-        sanitize: (v) => v.replace(/[^A-Za-z\s\-']/g, '')
+        pattern: patterns.name || /^[A-Za-z']+$/,
+        message: messages.name || 'Last name must be 2-100 characters only.',
+        sanitize: (v) => v.replace(/[^A-Za-z']/g, '')
     },
     email: {
         required: true,
@@ -80,6 +80,18 @@ export const validationRules = {
         pattern: /^\d{6}$/,
         message: 'OTP must be exactly 6 digits.',
         sanitize: (v) => v.replace(/[^0-9]/g, '')
+    },
+    // Video validation rules (XSS protection via escapeHtml on display, data preserved)
+    videoTitle: {
+        required: true,
+        minLength: 3,
+        maxLength: 255,
+        message: 'Title must be 3-255 characters.'
+    },
+    videoDescription: {
+        required: false,
+        maxLength: 1000,
+        message: 'Description cannot exceed 1000 characters.'
     }
 };
 

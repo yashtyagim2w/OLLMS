@@ -4,6 +4,9 @@
  */
 import initializeListPage from '/assets/js/list-page.js';
 
+// Use global escapeHtml
+const escapeHtml = window.escapeHtml;
+
 // State management
 let selectedUserId = null;
 let allUsersData = [];
@@ -27,6 +30,9 @@ function getStatusBadgeClass(status) {
 function renderDocumentItem({ row }) {
     const submittedDate = new Date(row.submitted_at);
     const relativeTime = timeAgo(submittedDate);
+    const firstName = escapeHtml(row.first_name);
+    const lastName = escapeHtml(row.last_name);
+    const email = escapeHtml(row.email);
 
     return `
         <li class="list-group-item user-list-item p-3 border-bottom ${row.id == selectedUserId ? 'bg-light' : ''}" 
@@ -34,11 +40,11 @@ function renderDocumentItem({ row }) {
             style="cursor: pointer; transition: background 0.2s;">
             <div class="d-flex align-items-center gap-3">
                 <div class="profile-avatar" style="width: 40px; height: 40px;">
-                    ${row.first_name.charAt(0).toUpperCase()}
+                    ${firstName.charAt(0).toUpperCase()}
                 </div>
                 <div class="flex-grow-1">
-                    <p class="mb-0 fw-bold">${row.first_name} ${row.last_name}</p>
-                    <small class="text-muted">${row.email}</small>
+                    <p class="mb-0 fw-bold">${firstName} ${lastName}</p>
+                    <small class="text-muted">${email}</small>
                     <div class="d-flex align-items-center mt-1">
                         <span class="badge badge-sm badge-${getStatusBadgeClass(row.status)} me-2">
                             ${row.status}
@@ -56,6 +62,12 @@ function renderDocumentItem({ row }) {
  */
 function renderReviewPanel(user) {
     const panel = document.getElementById('reviewPanel');
+    const firstName = escapeHtml(user.first_name);
+    const lastName = escapeHtml(user.last_name);
+    const email = escapeHtml(user.email);
+    const docUrl = escapeHtml(user.document_url);
+    const remarks = escapeHtml(user.remarks || '');
+
     panel.innerHTML = `
         <div class="card-header">
             <h3><i class="bi bi-file-earmark-text me-2"></i>Document Review</h3>
@@ -64,11 +76,11 @@ function renderReviewPanel(user) {
             <!-- User Info -->
             <div class="d-flex align-items-center gap-3 mb-4 pb-4 border-bottom">
                 <div class="profile-avatar" style="width: 60px; height: 60px; font-size: 24px;">
-                    ${user.first_name.charAt(0).toUpperCase()}
+                    ${firstName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                    <h5 class="mb-1">${user.first_name} ${user.last_name}</h5>
-                    <p class="text-muted mb-0">${user.email}</p>
+                    <h5 class="mb-1">${firstName} ${lastName}</h5>
+                    <p class="text-muted mb-0">${email}</p>
                     <small class="text-muted">Submitted: ${formatTime(user.submitted_at)}</small>
                 </div>
                 <div class="ms-auto">
@@ -82,8 +94,8 @@ function renderReviewPanel(user) {
             <div class="document-preview mb-4">
                 <div class="text-center">
                     <i class="bi bi-file-earmark-pdf" style="font-size: 64px; color: var(--danger-color);"></i>
-                    <p class="mt-3">${getFileName(user.document_url)}</p>
-                    <a href="${user.document_url}" target="_blank" class="btn btn-outline-primary btn-sm">
+                    <p class="mt-3">${escapeHtml(getFileName(user.document_url))}</p>
+                    <a href="${docUrl}" target="_blank" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-eye"></i> View Full Document
                     </a>
                 </div>
@@ -110,10 +122,10 @@ function renderReviewPanel(user) {
                 This document has been <strong>${user.status.toLowerCase()}</strong>.
                 ${user.reviewed_at ? `<br><small class="text-muted">Reviewed on: ${formatTime(user.reviewed_at)}</small>` : ''}
             </div>
-            ${user.remarks ? `
+            ${remarks ? `
             <div class="mt-3 p-3 bg-light rounded border-start border-4 ${user.status === 'APPROVED' ? 'border-success' : 'border-danger'}">
                 <strong class="d-block mb-2"><i class="bi bi-chat-quote me-1"></i> Admin Remarks:</strong>
-                <p class="mb-0">${user.remarks}</p>
+                <p class="mb-0">${remarks}</p>
             </div>
             ` : ''}
             `}
