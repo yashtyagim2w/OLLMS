@@ -268,6 +268,23 @@ class UserProfileModel extends Model
     }
 
     /**
+     * Get user by email (from auth_identities)
+     * Returns user_id if found, null otherwise
+     */
+    public function getUserByEmail(string $email): ?array
+    {
+        $db = db_connect();
+        $result = $db->table('auth_identities')
+            ->select('user_id')
+            ->where('secret', $email)
+            ->where('type', 'email_password')
+            ->get()
+            ->getRowArray();
+
+        return $result;
+    }
+
+    /**
      * Get user email by user ID (from auth_identities)
      */
     public function getUserEmail(int $userId): ?string
