@@ -109,7 +109,16 @@ $routes->group('admin', ['filter' => ['session', 'group:admin']], static functio
     $routes->post('api/users/(:num)/activate', 'Admin\UserManagementController::activate/$1');
     $routes->post('api/users/(:num)/set-password', 'Admin\UserManagementController::setPassword/$1');
 
+    // Video Management Routes
+    $routes->get('api/categories', 'Admin\VideoManagementController::apiGetCategories');
     $routes->get('api/videos', 'Admin\VideoManagementController::getList');
+    $routes->get('api/video/view-url', 'Admin\VideoManagementController::apiGetViewUrl');
+    $routes->post('api/video/get-upload-url', 'Admin\VideoManagementController::apiGetUploadUrl');
+    $routes->post('api/video/confirm-upload', 'Admin\VideoManagementController::apiConfirmUpload');
+    $routes->post('api/videos/(:num)/toggle-active', 'Admin\VideoManagementController::apiToggleActive/$1');
+    $routes->delete('api/videos/(:num)', 'Admin\VideoManagementController::apiDelete/$1');
+    $routes->put('api/videos/(:num)', 'Admin\VideoManagementController::apiUpdate/$1');
+
     $routes->get('api/questions', 'Admin\QuestionBankController::getList');
     $routes->get('api/instructions', 'Admin\InstructionController::getList');
     $routes->get('api/progress', 'Admin\ProgressController::getUserProgress');

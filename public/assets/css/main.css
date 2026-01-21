@@ -1511,3 +1511,23 @@ body.sidebar-open .sidebar-overlay {
     height: 1rem;
     border-width: 0.15em;
 }
+
+/* Video Thumbnail Preview */
+.video-thumbnail-preview {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid var(--gray-300);
+    background-color: var(--gray-900);
+}
+
+.video-thumbnail {
+    width: 80px;
+    height: 60px;
+    background: var(--gray-200);
+    border-radius: 6px;
+    border: 2px solid var(--gray-300);
+    font-size: 24px;
+    color: var(--primary-color);
+}

@@ -2,6 +2,22 @@
  * OLLMS - Main JavaScript
  */
 
+/**
+ * Global escapeHtml function for XSS protection
+ * Use when inserting user content into HTML templates
+ */
+window.escapeHtml = function (str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/\n/g, '&#10;')
+        .replace(/\r/g, '&#13;');
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     // Show session errors/messages via SWAL
     const sessionError = document.getElementById('session-error');

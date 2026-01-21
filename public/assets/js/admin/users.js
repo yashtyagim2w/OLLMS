@@ -5,6 +5,9 @@
 import initializeListPage from '/assets/js/list-page.js';
 import { FieldValidator, validationRules } from '/assets/js/validation.js';
 
+// Use global escapeHtml
+const escapeHtml = window.escapeHtml;
+
 // Store all users data for editing
 let allUsersData = [];
 
@@ -125,6 +128,10 @@ function resetValidationState() {
  * Render a user row in the table
  */
 function renderUserRow({ row, rowNumber }) {
+    const firstName = escapeHtml(row.first_name);
+    const lastName = escapeHtml(row.last_name);
+    const email = escapeHtml(row.email);
+
     let docStatusPill;
     switch (row.docStatus) {
         case 'APPROVED':
@@ -152,9 +159,9 @@ function renderUserRow({ row, rowNumber }) {
     return `
         <tr>
             <td>${rowNumber}</td>
-            <td>${row.first_name}</td>
-            <td>${row.last_name}</td>
-            <td class="text-muted">${row.email}</td>
+            <td>${firstName}</td>
+            <td>${lastName}</td>
+            <td class="text-muted">${email}</td>
             <td>${row.dob}</td>
             <td>${row.active
             ? '<span class="badge badge-success">Active</span>'

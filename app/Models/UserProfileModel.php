@@ -36,17 +36,17 @@ class UserProfileModel extends Model
     // Validation
     protected $validationRules = [
         'user_id'    => 'required|integer|is_unique[user_profiles.user_id,id,{id}]',
-        'first_name' => 'required|min_length[2]|max_length[100]|regex_match[/^[a-zA-Z\s\'-]+$/]',
-        'last_name'  => 'required|min_length[2]|max_length[100]|regex_match[/^[a-zA-Z\s\'-]+$/]',
+        'first_name' => 'required|min_length[2]|max_length[100]|regex_match[/^[a-zA-Z]+$/]',
+        'last_name'  => 'required|min_length[2]|max_length[100]|regex_match[/^[a-zA-Z]+$/]',
         'dob'        => 'required|valid_date[Y-m-d]',
     ];
 
     protected $validationMessages = [
         'first_name' => [
-            'regex_match' => 'First name can only contain letters, spaces, hyphens, and apostrophes.',
+            'regex_match' => 'First name can only contain letters.',
         ],
         'last_name' => [
-            'regex_match' => 'Last name can only contain letters, spaces, hyphens, and apostrophes.',
+            'regex_match' => 'Last name can only contain letters.',
         ],
     ];
 
