@@ -89,6 +89,7 @@ $routes->group('admin', ['filter' => ['session', 'group:admin']], static functio
     $routes->get('identity-review', 'Admin\IdentityReviewController::index');
     $routes->get('users', 'Admin\UserManagementController::index');
     $routes->get('videos', 'Admin\VideoManagementController::index');
+    $routes->get('categories', 'Admin\CategoryManagementController::index');
     $routes->get('questions', 'Admin\QuestionBankController::index');
     $routes->get('instructions', 'Admin\InstructionController::index');
     $routes->get('progress', 'Admin\ProgressController::index');
@@ -118,6 +119,15 @@ $routes->group('admin', ['filter' => ['session', 'group:admin']], static functio
     $routes->post('api/videos/(:num)/toggle-active', 'Admin\VideoManagementController::apiToggleActive/$1');
     $routes->delete('api/videos/(:num)', 'Admin\VideoManagementController::apiDelete/$1');
     $routes->put('api/videos/(:num)', 'Admin\VideoManagementController::apiUpdate/$1');
+
+    // Category Management APIs
+    $routes->get('api/category-list', 'Admin\CategoryManagementController::apiGetList');
+    $routes->post('api/category', 'Admin\CategoryManagementController::apiCreate');
+    $routes->put('api/category/(:num)', 'Admin\CategoryManagementController::apiUpdate/$1');
+    $routes->delete('api/category/(:num)', 'Admin\CategoryManagementController::apiDelete/$1');
+    $routes->post('api/category/(:num)/restore', 'Admin\CategoryManagementController::apiRestore/$1');
+    $routes->post('api/category/reorder', 'Admin\CategoryManagementController::apiReorder');
+    $routes->get('api/category/export', 'Admin\CategoryManagementController::export');
 
     $routes->get('api/questions', 'Admin\QuestionBankController::getList');
     $routes->get('api/instructions', 'Admin\InstructionController::getList');

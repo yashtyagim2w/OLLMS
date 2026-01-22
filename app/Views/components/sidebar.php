@@ -41,6 +41,7 @@ $adminMenu = [
     [
         'title' => 'Content',
         'items' => [
+            ['path' => '/admin/categories', 'icon' => 'bi-tags', 'label' => 'Category Management'],
             ['path' => '/admin/videos', 'icon' => 'bi-play-circle', 'label' => 'Video Management'],
             ['path' => '/admin/questions', 'icon' => 'bi-question-circle', 'label' => 'Question Bank'],
             ['path' => '/admin/instructions', 'icon' => 'bi-list-check', 'label' => 'Test Instructions'],

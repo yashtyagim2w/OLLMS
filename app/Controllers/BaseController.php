@@ -42,4 +42,22 @@ abstract class BaseController extends Controller
         // Preload any models, libraries, etc, here.
         // $this->session = service('session');
     }
+
+    /**
+     * Convert array to CSV string
+     */
+    protected function arrayToCsv(array $data): string
+    {
+        $output = fopen('php://temp', 'r+');
+
+        foreach ($data as $row) {
+            fputcsv($output, $row);
+        }
+
+        rewind($output);
+        $csv = stream_get_contents($output);
+        fclose($output);
+
+        return $csv;
+    }
 }

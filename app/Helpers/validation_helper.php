@@ -32,6 +32,11 @@ const PASSWORD_MAX_LENGTH = 128;
 // OTP
 const OTP_LENGTH = 6;
 
+// Category name validation
+const CATEGORY_NAME_MIN_LENGTH = 2;
+const CATEGORY_NAME_MAX_LENGTH = 50;
+const CATEGORY_NAME_ALLOWED_CHARS = 'A-Za-z0-9\\s\\-&'; // Letters, numbers, spaces, hyphens, ampersand
+
 /**
  * Get the email validation regex pattern
  * 
@@ -110,6 +115,36 @@ function get_password_pattern(): string
 function get_password_pattern_js(): string
 {
     return '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{' . PASSWORD_MIN_LENGTH . ',' . PASSWORD_MAX_LENGTH . '}$';
+}
+
+/**
+ * Get the category name validation regex pattern
+ * 
+ * @return string The regex pattern for valid category names
+ */
+function get_category_name_pattern(): string
+{
+    return '/^[' . CATEGORY_NAME_ALLOWED_CHARS . ']+$/';
+}
+
+/**
+ * Get the category name pattern for HTML (without delimiters)
+ * 
+ * @return string The pattern for HTML pattern attribute
+ */
+function get_category_name_pattern_html(): string
+{
+    return '[' . CATEGORY_NAME_ALLOWED_CHARS . ']+';
+}
+
+/**
+ * Get the category name pattern for JavaScript replace (to strip invalid chars)
+ * 
+ * @return string The pattern for JS replace to sanitize input
+ */
+function get_category_name_sanitize_js(): string
+{
+    return '[^' . CATEGORY_NAME_ALLOWED_CHARS . ']';
 }
 
 // ============================================================================
@@ -256,6 +291,17 @@ function sanitize_aadhaar(string $aadhaar): string
     return preg_replace('/[^0-9]/', '', $aadhaar);
 }
 
+/**
+ * Sanitize category name input (remove disallowed characters)
+ * 
+ * @param string $name The category name to sanitize
+ * @return string The sanitized category name
+ */
+function sanitize_category_name(string $name): string
+{
+    return preg_replace('/[^' . CATEGORY_NAME_ALLOWED_CHARS . ']/', '', $name);
+}
+
 // ============================================================================
 // VALIDATION ERROR MESSAGES
 // ============================================================================
@@ -274,6 +320,7 @@ function get_validation_messages(): array
         'password' => 'Password must be ' . PASSWORD_MIN_LENGTH . '-' . PASSWORD_MAX_LENGTH . ' characters with uppercase, lowercase, and number',
         'age' => 'Age must be between ' . MIN_AGE . ' and ' . MAX_AGE . ' years',
         'dob' => 'You must be at least ' . MIN_AGE . ' years old',
+        'category_name' => 'Only letters, numbers, spaces, hyphens, and & allowed (' . CATEGORY_NAME_MIN_LENGTH . '-' . CATEGORY_NAME_MAX_LENGTH . ' characters)',
     ];
 }
 
