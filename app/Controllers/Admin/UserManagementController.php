@@ -202,22 +202,5 @@ class UserManagementController extends BaseAdminController
 
         return $this->response->setJSON($result);
     }
-
-    /**
-     * Convert array to CSV string
-     */
-    private function arrayToCsv(array $data): string
-    {
-        $output = fopen('php://temp', 'r+');
-
-        foreach ($data as $row) {
-            fputcsv($output, $row);
-        }
-
-        rewind($output);
-        $csv = stream_get_contents($output);
-        fclose($output);
-
-        return $csv;
-    }
+    
 }
